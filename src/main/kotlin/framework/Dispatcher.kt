@@ -10,13 +10,15 @@ class Dispatcher(
     private val prefix: String
 ) : ListenerAdapter() {
 
-    private val commands = mutableSetOf<Command>()
+    private val commands = mutableSetOf<BaseCommand>()
 
-    fun addCommand(command: Command) = commands.add(command)
+    fun addCommand(command: BaseCommand) = commands.add(command)
     fun registerCommands() = jda.addEventListener(this)
 
     override fun onMessageReceived(e: MessageReceivedEvent) {
+        // Keep things sane (PMs and group chats aren't allowed because I'm lazy).
         if (!e.message.contentRaw.startsWith(prefix)
+            || e.author.isBot
             || e.channelType == ChannelType.PRIVATE
             || e.channelType == ChannelType.PRIVATE
         ) {
@@ -50,6 +52,6 @@ class Dispatcher(
         command.dispatch(CommandContext(e, jda), CommandArguments(commandArgs))
 
         // TODO: add proper logging
-        println("${e.author} used command $command!\n${command.aliases + command.name}")
+        println("${e.author.name} used command $command!\n${command.aliases + command.name}")
     }
 }

@@ -26,9 +26,9 @@ class MiscCommands {
 
             ctx.send(
                 embed {
-                    setTitle("$EMOJI_PING_PONG  Pong!")
-                    setDescription("[${ctx.jda.gatewayPing}ms, ${ping}ms]")
-                    setColor(EMBED_COLOR)
+                    title = "$EMOJI_PING_PONG  Pong!"
+                    description = "[${ctx.jda.gatewayPing}ms, ${ping}ms]"
+                    color = EMBED_COLOR
                 }
             )
         }
@@ -44,14 +44,12 @@ class MiscCommands {
 
             ctx.send(
                 embed {
-                    setTitle("$EMOJI_OPEN_FILE_FOLDER  Code statistics:")
-                    setDescription(
-                        """
+                    title = "$EMOJI_OPEN_FILE_FOLDER  Code statistics:"
+                    description = """
                         **Code files**: ${files.count()}
                         **Lines of code**: $linesOfCode
-                        """.trimIndent()
-                    )
-                    setColor(EMBED_COLOR)
+                    """.trimIndent()
+                    color = EMBED_COLOR
                 }
             )
         }

@@ -1,5 +1,6 @@
 package framework.dsl
 
+import framework.BaseCommand
 import framework.Command
 
-fun command(name: String, init: Command.() -> Unit) = Command(name).apply(init)
+fun command(name: String, init: BaseCommand.() -> Unit): BaseCommand = Command(name).apply(init)

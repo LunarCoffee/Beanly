@@ -33,15 +33,13 @@ class FunCommands {
 
             ctx.send(
                 embed {
-                    setTitle(
-                        "$EMOJI_RADIO_BUTTON  You flipped ${if (times == 1) {
-                            flips[0]
-                        } else {
-                            "$heads heads and $tails tails"
-                        }}!"
-                    )
-                    setDescription(flips.toString())
-                    setColor(EMBED_COLOR)
+                    title = "$EMOJI_RADIO_BUTTON  You flipped ${if (times == 1) {
+                        flips[0]
+                    } else {
+                        "$heads heads and $tails tails"
+                    }}!"
+                    description = flips.toString()
+                    color = EMBED_COLOR
                 }
             )
         }

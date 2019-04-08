@@ -20,11 +20,11 @@ class Bot(private val jda: JDA, prefix: String) {
 
     // Map of [CommandGroup]s to their [Command]s with messy reflection stuff.
     private val groupToCommands = commandGroups
-        .map { group -> group.methods.filter { it.returnType == Command::class.java } }
+        .map { group -> group.methods.filter { it.returnType == BaseCommand::class.java } }
         .zip(commandGroups.map { it.newInstance() })
         .map { (methods, group) ->
             group::class.annotations.find { it is CommandGroup } as CommandGroup to methods.map {
-                it.invoke(group) as Command
+                it.invoke(group) as BaseCommand
             }
         }
         .toMap()
@@ -74,23 +74,21 @@ class Bot(private val jda: JDA, prefix: String) {
                     ctx.send(
                         embed {
                             if (commandName.isBlank()) {
-                                setTitle("$EMOJI_PAGE_FACING_UP  All commands:")
+                                title = "$EMOJI_PAGE_FACING_UP  All commands:"
 
                                 for ((group, commands) in groupToCommands) {
                                     val names = commands.map { it.name }
-                                    appendDescription("**${group.name}**: $names\n")
+                                    description += "**${group.name}**: $names\n"
                                 }
                             } else if (command != null) {
-                                setTitle("$EMOJI_PAGE_FACING_UP  Info on **${command.name}**:")
-                                setDescription(
-                                    """
+                                title = "$EMOJI_PAGE_FACING_UP  Info on **${command.name}**:"
+                                description = """
                                     **Aliases**: ${command.aliases.ifEmptyToString()}
                                     **Description**: ${command.description}
                                     **Arguments**: ${command.expectedArgs.ifEmptyToString()}
-                                    """.trimIndent()
-                                )
+                                """.trimIndent()
                             }
-                            setColor(EMBED_COLOR)
+                            color = EMBED_COLOR
                         }
                     )
                 }
