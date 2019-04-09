@@ -59,7 +59,7 @@ class Bot(private val jda: JDA, prefix: String) {
                 expectedArgs = listOf(TrWord(true, name = "command name"))
                 execute { ctx, args ->
                     val commandName = args.get<String>(0)
-                    var command = commands.find { commandName in it.aliases + it.name }
+                    var command = commands.find { commandName in it.names }
 
                     // Lazy way of making help for the help command (this) work.
                     if (commandName == "help") {

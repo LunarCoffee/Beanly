@@ -29,7 +29,7 @@ class Dispatcher(
         val name = content.substringAfter(prefix).substringBefore(" ")
 
         val command = commands
-            .find { command -> name in command.aliases + command.name }
+            .find { command -> name in command.names }
             ?: return
 
         if (command.deleteSender) {

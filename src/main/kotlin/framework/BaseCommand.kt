@@ -7,6 +7,7 @@ interface BaseCommand {
     var description: String
 
     var aliases: List<String>
+    val names: List<String>
     var expectedArgs: List<Transformer<out Any>>
 
     var deleteSender: Boolean
