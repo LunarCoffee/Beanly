@@ -16,6 +16,8 @@ class Command(
         get() = aliases + name
 
     override var deleteSender = false
+    override var ownerOnly = false
+
     override var execute: suspend (CommandContext, CommandArguments) -> Unit = { _, _ -> }
 
     override fun execute(action: suspend (CommandContext, CommandArguments) -> Unit) {

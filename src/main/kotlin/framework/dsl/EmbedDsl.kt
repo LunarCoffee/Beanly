@@ -1,30 +1,44 @@
 package framework.dsl
 
-import net.dv8tion.jda.api.EmbedBuilder
+import beanly.consts.EMBED_COLOR
+import net.dv8tion.jda.api.entities.EmbedType
 import net.dv8tion.jda.api.entities.MessageEmbed
-import net.dv8tion.jda.api.entities.Role
 
-class EmbedDsl : EmbedBuilder() {
+class EmbedDsl {
     var title: String = ""
     var description: String = ""
-    var color: Int = Role.DEFAULT_COLOR_RAW
+    var color: Int = EMBED_COLOR
+
+    private val embedFields = mutableListOf<MessageEmbed.Field>()
 
     fun field(init: FieldDsl.() -> Unit) {
         val fieldDsl = FieldDsl().apply(init)
-        addField(MessageEmbed.Field(fieldDsl.name, fieldDsl.content, false))
+        embedFields += MessageEmbed.Field(fieldDsl.name, fieldDsl.content, false)
     }
 
     fun inlineField(init: FieldDsl.() -> Unit) {
         val fieldDsl = FieldDsl().apply(init)
-        addField(MessageEmbed.Field(fieldDsl.name, fieldDsl.content, true))
+        embedFields += MessageEmbed.Field(fieldDsl.name, fieldDsl.content, true)
     }
 
     fun create(): MessageEmbed {
-        return apply {
-            setTitle(title)
-            setDescription(description)
-            setColor(color)
-        }.build()
+        // Use constructor instead of builder to bypass bounds checking to allow for simpler
+        // exception handling in higher level APIs.
+        return MessageEmbed(
+            null,
+            title,
+            description,
+            EmbedType.RICH,
+            null,
+            color,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            embedFields
+        )
     }
 
     inner class FieldDsl {

@@ -8,11 +8,7 @@ class TrBigInt(
     override val name: String = "number"
 ) : Transformer<BigInteger> {
 
-    override fun transform(
-        args: MutableList<String>,
-        taken: MutableList<String>
-    ): BigInteger {
-
+    override fun transform(args: MutableList<String>, taken: MutableList<String>): BigInteger {
         return if (optional && args.firstOrNull()?.toBigIntegerOrNull() == null) {
             default
         } else {

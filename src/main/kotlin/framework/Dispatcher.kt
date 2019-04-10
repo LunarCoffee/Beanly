@@ -1,5 +1,6 @@
 package framework
 
+import framework.extensions.error
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -7,6 +8,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 
 class Dispatcher(
     private val jda: JDA,
+    private val bot: Bot,
     private val prefix: String
 ) : ListenerAdapter() {
 
@@ -32,6 +34,11 @@ class Dispatcher(
             .find { command -> name in command.names }
             ?: return
 
+        if (command.ownerOnly && e.author.id == bot.config.ownerId) {
+            e.channel.error("You need to be the owner to use that command!")
+            return
+        }
+
         if (command.deleteSender) {
             e.message.delete().queue()
         }
@@ -49,7 +56,7 @@ class Dispatcher(
 
         // Actually transform the arguments and execute the command with them.
         val commandArgs = command.expectedArgs.map { it.transform(rawArgs, taken) }
-        command.dispatch(CommandContext(e, jda), CommandArguments(commandArgs))
+        command.dispatch(CommandContext(e, jda, bot), CommandArguments(commandArgs))
 
         // TODO: add proper logging
         println("${e.author.name} used command $command!\n${command.aliases + command.name}")

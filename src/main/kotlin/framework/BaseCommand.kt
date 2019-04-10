@@ -11,6 +11,7 @@ interface BaseCommand {
     var expectedArgs: List<Transformer<out Any>>
 
     var deleteSender: Boolean
+    var ownerOnly: Boolean
 
     var execute: suspend (CommandContext, CommandArguments) -> Unit
 

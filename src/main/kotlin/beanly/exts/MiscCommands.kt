@@ -1,8 +1,7 @@
 @file:Suppress("unused")
 
-package beanly.groups
+package beanly.exts
 
-import beanly.consts.EMBED_COLOR
 import beanly.consts.EMOJI_OPEN_FILE_FOLDER
 import beanly.consts.EMOJI_PING_PONG
 import framework.CommandGroup
@@ -28,7 +27,6 @@ class MiscCommands {
                 embed {
                     title = "$EMOJI_PING_PONG  Pong!"
                     description = "[${ctx.jda.gatewayPing}ms, ${ping}ms]"
-                    color = EMBED_COLOR
                 }
             )
         }
@@ -49,7 +47,6 @@ class MiscCommands {
                         **Code files**: ${files.count()}
                         **Lines of code**: $linesOfCode
                     """.trimIndent()
-                    color = EMBED_COLOR
                 }
             )
         }

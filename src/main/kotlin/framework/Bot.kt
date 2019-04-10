@@ -1,25 +1,27 @@
 package framework
 
-import beanly.consts.EMBED_COLOR
-import beanly.consts.EMOJI_PAGE_FACING_UP
-import beanly.ifEmptyToString
-import framework.dsl.command
-import framework.dsl.embed
-import framework.extensions.error
-import framework.extensions.send
-import framework.transformers.TrWord
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.entities.Activity
 import org.reflections.Reflections
+import org.yaml.snakeyaml.Yaml
+import java.io.File
 
-class Bot(private val jda: JDA, prefix: String) {
-    private val dispatcher = Dispatcher(jda, prefix)
+
+class Bot(configPath: String) {
+    val config = Yaml().loadAs(File(configPath).readText(), BotConfig::class.java)!!
+
+    private val jda: JDA = JDABuilder()
+        .setToken(config.token)
+        .build()
+
+    private val dispatcher = Dispatcher(jda, this, config.prefix)
     private val reflections = Reflections()
 
     private val commandGroups = reflections.getTypesAnnotatedWith(CommandGroup::class.java)
 
     // Map of [CommandGroup]s to their [Command]s with messy reflection stuff.
-    private val groupToCommands = commandGroups
+    val groupToCommands = commandGroups
         .map { group -> group.methods.filter { it.returnType == BaseCommand::class.java } }
         .zip(commandGroups.map { it.newInstance() })
         .map { (methods, group) ->
@@ -29,7 +31,7 @@ class Bot(private val jda: JDA, prefix: String) {
         }
         .toMap()
 
-    private val commands = groupToCommands.values.flatten()
+    val commands = groupToCommands.values.flatten()
 
     var activity: Activity?
         get() = jda.presence.activity
@@ -37,10 +39,7 @@ class Bot(private val jda: JDA, prefix: String) {
             jda.presence.activity = value
         }
 
-    fun start() {
-        generateHelpCommand()
-        loadCommands()
-    }
+    fun start() = loadCommands()
 
     private fun loadCommands() {
         groupToCommands
@@ -49,50 +48,5 @@ class Bot(private val jda: JDA, prefix: String) {
             .forEach { dispatcher.addCommand(it) }
 
         dispatcher.registerCommands()
-    }
-
-    private fun generateHelpCommand() {
-        dispatcher.addCommand(
-            command("help") {
-                description = "Shows help text for all or a specific command."
-
-                expectedArgs = listOf(TrWord(true, name = "command name"))
-                execute { ctx, args ->
-                    val commandName = args.get<String>(0)
-                    var command = commands.find { commandName in it.names }
-
-                    // Lazy way of making help for the help command (this) work.
-                    if (commandName == "help") {
-                        command = this
-                    }
-
-                    if (!commandName.isBlank() && command == null) {
-                        ctx.error("I can't find that command!")
-                        return@execute
-                    }
-
-                    ctx.send(
-                        embed {
-                            if (commandName.isBlank()) {
-                                title = "$EMOJI_PAGE_FACING_UP  All commands:"
-
-                                for ((group, commands) in groupToCommands) {
-                                    val names = commands.map { it.name }
-                                    description += "**${group.name}**: $names\n"
-                                }
-                            } else if (command != null) {
-                                title = "$EMOJI_PAGE_FACING_UP  Info on **${command.name}**:"
-                                description = """
-                                    **Aliases**: ${command.aliases.ifEmptyToString()}
-                                    **Description**: ${command.description}
-                                    **Arguments**: ${command.expectedArgs.ifEmptyToString()}
-                                """.trimIndent()
-                            }
-                            color = EMBED_COLOR
-                        }
-                    )
-                }
-            }
-        )
     }
 }

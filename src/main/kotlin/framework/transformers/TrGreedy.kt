@@ -1,28 +1,38 @@
 package framework.transformers
 
-import java.lang.Exception
-
 class TrGreedy<T>(
     val conversionFunction: (String) -> T,
-    override val optional: Boolean = false,
     override val default: List<T> = emptyList(),
-    override val name: String = "number"
+    override val name: String = "greedy"
 ) : Transformer<List<T>> {
 
-    override fun transform(
-        args: MutableList<String>,
-        taken: MutableList<String>
-    ): List<T> {
+    // Greedy is always technically optional, since it can steal at least 0 args.
+    override val optional = true
 
-        // TODO: Logic is right, make this actually work.
-        return args.takeWhile {
+    override fun transform(args: MutableList<String>, taken: MutableList<String>): List<T> {
+        if (args.isEmpty()) {
+            return default
+        }
+
+        val result = mutableListOf<T>()
+        var numTaken = 0
+
+        for (arg in args) {
             try {
-                conversionFunction(it)
-                return@takeWhile true
+                val item = args[0 + numTaken++]
+                result.add(conversionFunction(item))
+                taken += item
             } catch (e: Exception) {
-                return@takeWhile false
+                break
             }
-        }.map { conversionFunction(it) }
+        }
+        args.removeAll(args.take(numTaken - 1))
+
+        return if (result.isEmpty()) {
+            default
+        } else {
+            result
+        }
     }
 
     override fun toString() = name
