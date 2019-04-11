@@ -5,9 +5,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class Command(
-    override var name: String,
-    override var description: String = "(no description)"
+    override var name: String
 ) : BaseCommand {
+    override var description = "(no description)"
+    override var extDescription = "(no extended description)"
 
     override var aliases = listOf<String>()
     override var expectedArgs = emptyList<Transformer<out Any>>()

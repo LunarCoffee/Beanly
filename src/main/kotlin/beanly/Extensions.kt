@@ -7,3 +7,5 @@ fun <T> Iterable<T>.ifEmptyToString(): String {
         toString()
     }
 }
+
+fun String.trimToDescription() = trimMargin().replace("\n", " ").replace("\\n", "\n")

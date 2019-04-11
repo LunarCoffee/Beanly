@@ -8,11 +8,7 @@ class TrUser(
     override val name: String = "user"
 ) : Transformer<User> {
 
-    override fun transform(
-        args: MutableList<String>,
-        taken: MutableList<String>
-    ): User {
-
+    override fun transform(args: MutableList<String>, taken: MutableList<String>): User {
         if (optional && args.isEmpty()) {
             return default
         }

@@ -6,11 +6,7 @@ class TrDouble(
     override val name: String = "decimal"
 ) : Transformer<Double> {
 
-    override fun transform(
-        args: MutableList<String>,
-        taken: MutableList<String>
-    ): Double {
-
+    override fun transform(args: MutableList<String>, taken: MutableList<String>): Double {
         return if (optional && args.firstOrNull()?.toDoubleOrNull() == null) {
             default
         } else {

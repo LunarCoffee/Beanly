@@ -1,6 +1,8 @@
 package framework
 
 import framework.extensions.error
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -35,7 +37,9 @@ class Dispatcher(
             ?: return
 
         if (command.ownerOnly && e.author.id == bot.config.ownerId) {
-            e.channel.error("You need to be the owner to use that command!")
+            GlobalScope.launch {
+                e.channel.error("You need to be the owner to use that command!")
+            }
             return
         }
 

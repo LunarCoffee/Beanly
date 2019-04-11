@@ -1,17 +1,18 @@
 package framework.transformers
 
-class TrWord(
+class TrRest(
     override val optional: Boolean = false,
     override val default: String = "",
-    override val name: String = "word"
+    override val name: String = "rest"
 ) : Transformer<String> {
 
     override fun transform(args: MutableList<String>, taken: MutableList<String>): String {
         return if (optional && args.isEmpty()) {
             default
         } else {
-            args[0].also {
-                taken += args.removeAt(0)
+            args.joinToString(" ").also {
+                taken += args
+                args.clear()
             }
         }
     }

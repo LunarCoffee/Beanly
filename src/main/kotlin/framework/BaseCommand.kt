@@ -5,6 +5,7 @@ import framework.transformers.Transformer
 interface BaseCommand {
     var name: String
     var description: String
+    var extDescription: String
 
     var aliases: List<String>
     val names: List<String>
