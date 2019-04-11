@@ -17,13 +17,14 @@ import java.util.*
 @CommandGroup("Utility")
 class UtilityCommands {
     fun rpn() = command("rpn") {
-        description = "Reverse polish notation calculator! ...Not sure why this exists."
+        description = "Reverse polish notation calculator! I'm not sure why this exists."
         aliases = listOf("reversepolish")
 
         expectedArgs = listOf(TrSplit(name = "expression"))
         execute { ctx, args ->
             val expression = args.get<List<String>>(0)
             val stack = Stack<Int>()
+            val operators = listOf("+", "-", "*", "/", "**", "%", "&", "|", "^")
 
             for (token in expression) {
                 val number = token.toIntOrNull()
@@ -32,14 +33,9 @@ class UtilityCommands {
                     continue
                 }
 
-                when (token) {
-                    "+" -> stack.push(stack.pop() + stack.pop())
-                    "-" -> stack.push(-stack.pop() + stack.pop())
-                    "*" -> stack.push(stack.pop() * stack.pop())
-                    "/" -> {
-                        val o = stack.pop()
-                        stack.push(stack.pop() / o)
-                    }
+                if (token !in operators) {
+                    ctx.error("Something was wrong with your expression!")
+                    return@execute
                 }
             }
 
