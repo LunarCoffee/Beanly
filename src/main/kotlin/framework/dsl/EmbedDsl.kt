@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package framework.dsl
 
 import beanly.consts.EMBED_COLOR
@@ -8,6 +10,10 @@ class EmbedDsl {
     var title: String = ""
     var description: String = ""
     var color: Int = EMBED_COLOR
+
+    private var author: MessageEmbed.AuthorInfo? = null
+    private var footer: MessageEmbed.Footer? = null
+    private var thumbnail: MessageEmbed.Thumbnail? = null
 
     private val embedFields = mutableListOf<MessageEmbed.Field>()
 
@@ -21,6 +27,50 @@ class EmbedDsl {
         embedFields += MessageEmbed.Field(fieldDsl.name, fieldDsl.content, true)
     }
 
+    inner class FieldDsl {
+        var name: String = ""
+        var content: String = ""
+    }
+
+    fun footer(init: FooterDsl.() -> Unit) {
+        val footerDsl = FooterDsl().apply(init)
+        footer = MessageEmbed.Footer(footerDsl.text, footerDsl.iconUrl, footerDsl.proxyIconUrl)
+    }
+
+    inner class FooterDsl {
+        var text: String? = null
+        var iconUrl: String? = null
+        var proxyIconUrl: String? = null
+    }
+
+    fun author(init: AuthorDsl.() -> Unit) {
+        val authorDsl = AuthorDsl().apply(init)
+        author = authorDsl.run {
+            MessageEmbed.AuthorInfo(name, url, iconUrl, proxyIconUrl)
+        }
+    }
+
+    inner class AuthorDsl {
+        var name: String? = null
+        var url: String? = null
+        var iconUrl: String? = null
+        var proxyIconUrl: String? = null
+    }
+
+    fun thumbnail(init: ThumbnailDsl.() -> Unit) {
+        val thumbnailDsl = ThumbnailDsl().apply(init)
+        thumbnail = thumbnailDsl.run {
+            MessageEmbed.Thumbnail(url, proxyUrl, width, height)
+        }
+    }
+
+    inner class ThumbnailDsl {
+        var url: String? = null
+        var proxyUrl: String? = null
+        var width: Int = 50
+        var height: Int = 50
+    }
+
     fun create(): MessageEmbed {
         // Use constructor instead of builder to bypass bounds checking to allow for simpler
         // exception handling in higher level APIs.
@@ -31,19 +81,14 @@ class EmbedDsl {
             EmbedType.RICH,
             null,
             color,
+            thumbnail,
             null,
+            author,
             null,
-            null,
-            null,
-            null,
+            footer,
             null,
             embedFields
         )
-    }
-
-    inner class FieldDsl {
-        var name: String = ""
-        var content: String = ""
     }
 }
 

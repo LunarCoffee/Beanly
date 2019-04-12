@@ -4,11 +4,11 @@ import net.dv8tion.jda.api.entities.User
 
 class TrUser(
     override val optional: Boolean = false,
-    override val default: User,
+    override var default: User? = null,
     override val name: String = "user"
-) : Transformer<User> {
+) : Transformer<User?> {
 
-    override fun transform(args: MutableList<String>, taken: MutableList<String>): User {
+    override fun transform(args: MutableList<String>, taken: MutableList<String>): User? {
         if (optional && args.isEmpty()) {
             return default
         }

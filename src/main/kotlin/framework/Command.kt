@@ -4,14 +4,12 @@ import framework.transformers.Transformer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-class Command(
-    override var name: String
-) : BaseCommand {
+class Command(override var name: String) : BaseCommand {
     override var description = "(no description)"
     override var extDescription = "(no extended description)"
 
     override var aliases = listOf<String>()
-    override var expectedArgs = emptyList<Transformer<out Any>>()
+    override var expectedArgs = emptyList<Transformer<out Any?>>()
 
     override val names
         get() = aliases + name
@@ -19,15 +17,15 @@ class Command(
     override var deleteSender = false
     override var ownerOnly = false
 
-    override var execute: suspend (CommandContext, CommandArguments) -> Unit = { _, _ -> }
+    override lateinit var execute: suspend (CommandContext, CommandArguments) -> Unit
 
     override fun execute(action: suspend (CommandContext, CommandArguments) -> Unit) {
         execute = action
     }
 
-    override fun dispatch(e: CommandContext, args: CommandArguments) {
+    override fun dispatch(ctx: CommandContext, args: CommandArguments) {
         GlobalScope.launch {
-            execute(e, args)
+            execute(ctx, args)
         }
     }
 

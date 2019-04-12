@@ -9,7 +9,7 @@ interface BaseCommand {
 
     var aliases: List<String>
     val names: List<String>
-    var expectedArgs: List<Transformer<out Any>>
+    var expectedArgs: List<Transformer<out Any?>>
 
     var deleteSender: Boolean
     var ownerOnly: Boolean
@@ -17,5 +17,5 @@ interface BaseCommand {
     var execute: suspend (CommandContext, CommandArguments) -> Unit
 
     fun execute(action: suspend (CommandContext, CommandArguments) -> Unit)
-    fun dispatch(e: CommandContext, args: CommandArguments)
+    fun dispatch(ctx: CommandContext, args: CommandArguments)
 }

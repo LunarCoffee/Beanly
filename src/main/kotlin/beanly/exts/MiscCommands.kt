@@ -119,6 +119,10 @@ class MiscCommands {
         description = "Gets my GitLab repo URL."
         aliases = listOf("repo", "gitlab")
 
+        extDescription = """
+
+        """.trimToDescription()
+
         execute { ctx, _ ->
             ctx.success("<https://gitlab.com/LunarCoffee/beanly>")
         }

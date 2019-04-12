@@ -16,7 +16,6 @@ import framework.extensions.error
 import framework.extensions.send
 import framework.transformers.TrGreedy
 import framework.transformers.TrInt
-import framework.transformers.TrRest
 import framework.transformers.TrSplit
 import kotlin.random.Random
 

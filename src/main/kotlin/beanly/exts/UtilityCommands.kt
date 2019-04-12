@@ -2,7 +2,9 @@
 
 package beanly.exts
 
+import beanly.consts.EMOJI_MAG_GLASS
 import beanly.consts.EMOJI_PAGE_FACING_UP
+import beanly.consts.TIME_FORMATTER
 import beanly.ifEmptyToString
 import beanly.trimToDescription
 import framework.CommandGroup
@@ -12,6 +14,7 @@ import framework.extensions.error
 import framework.extensions.send
 import framework.extensions.success
 import framework.transformers.TrSplit
+import framework.transformers.TrUser
 import framework.transformers.TrWord
 import java.util.*
 import kotlin.math.pow
@@ -19,6 +22,93 @@ import kotlin.math.roundToInt
 
 @CommandGroup("Utility")
 class UtilityCommands {
+    fun ui() = command("ui") {
+        description = "Gets information about a user."
+        aliases = listOf("userinfo")
+
+        extDescription = """
+            |`ui [name|id]`\n
+            |Gets basic information about a user. If a name or ID is specified, this command will
+            |attempt to fetch a user with them. If not, the author of the message will be used. If
+            |the user is in the current server, the `mi` command may provide more detailed info.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrUser(true, name = "user"))
+        execute { ctx, args ->
+            val user = args[0] ?: ctx.event.author
+            val botOrUser = if (user.isBot) "bot" else "user"
+
+            ctx.send(
+                user.run {
+                    embed {
+                        title = "$EMOJI_MAG_GLASS  Info on $botOrUser **$asTag**:"
+                        description = """
+                            |**User ID**: $id
+                            |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
+                            |**Avatar ID**: ${avatarId ?: "(none)"}
+                            |**Mention**: $asMention
+                        """.trimMargin()
+
+                        thumbnail {
+                            url = avatarUrl ?: defaultAvatarUrl
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    fun mi() = command("mi") {
+        description = "Gets information about a member of the current server."
+        aliases = listOf("memberinfo")
+
+        extDescription = """
+
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrUser(true, name = "member"))
+        execute { ctx, args ->
+            val member = ctx.event.guild.getMember(args[0] ?: ctx.event.author)
+
+            if (member == null) {
+                ctx.error("That user is not a member of this server!")
+                return@execute
+            }
+
+            ctx.send(
+                member.run {
+                    val botOrMember = if (member.user.isBot) "bot" else "member"
+                    val activity = member.activities.firstOrNull()?.name ?: "(none)"
+
+                    val userRoles = if (!roles.isEmpty()) {
+                        "[${roles.joinToString { it.asMention }}]"
+                    } else {
+                        "(none)"
+                    }
+
+                    embed {
+                        title = "$EMOJI_MAG_GLASS  Info on $botOrMember **${user.asTag}**:"
+                        description = """
+                            |**User ID**: $id
+                            |**Nickname**: ${nickname ?: "(none)"}
+                            |**Status**: ${onlineStatus.key}
+                            |**Activity**: $activity
+                            |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
+                            |**Join time**: ${timeJoined.format(TIME_FORMATTER)}
+                            |**Avatar ID**: ${user.avatarId ?: "(none)"}
+                            |**Mention**: $asMention
+                            |**Roles**: $userRoles
+                        """.trimMargin()
+
+                        thumbnail {
+                            url = user.avatarUrl ?: user.defaultAvatarUrl
+                        }
+                    }
+                }
+            )
+        }
+    }
+
     fun rpn() = command("rpn") {
         description = "Reverse polish notation calculator! I'm not sure why this exists."
         aliases = listOf("reversepolish")
@@ -86,7 +176,7 @@ class UtilityCommands {
     }
 
     fun help() = command("help") {
-        description = "Shows help text. Type `..help help -v` for more info."
+        description = "Lists all commands or shows help for a specific command."
         extDescription = """
             |`help [command name] [-v]`\n
             |With a command name, this command gets its aliases, short description, expected
@@ -109,12 +199,14 @@ class UtilityCommands {
                 embed {
                     if (commandName.isBlank()) {
                         title = "$EMOJI_PAGE_FACING_UP  All commands:"
-
                         for ((group, commands) in ctx.bot.groupToCommands) {
                             val names = commands.map { it.name }
                             description += "**${group.name}**: $names\n"
                         }
-                        description += "Type `..help help` for more info."
+
+                        footer {
+                            text = "Type '..help help' for more info."
+                        }
                     } else if (command != null) {
                         title = "$EMOJI_PAGE_FACING_UP  Info on **${command.name}**:"
                         description = """
@@ -125,6 +217,10 @@ class UtilityCommands {
 
                         if ("v" in flags) {
                             description += "\n**Extended description**: ${command.extDescription}"
+                        } else {
+                            footer {
+                                text = "Type '..help ${command.name} -v' for more info."
+                            }
                         }
                     }
                 }
