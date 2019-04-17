@@ -5,6 +5,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class Command(override var name: String) : BaseCommand {
+    override var usage = "(no usage)"
+
     override var description = "(no description)"
     override var extDescription = "(no extended description)"
 

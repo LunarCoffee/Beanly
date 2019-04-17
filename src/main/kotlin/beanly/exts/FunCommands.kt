@@ -29,12 +29,12 @@ class FunCommands {
         aliases = listOf("coin", "flipcoin")
 
         extDescription = """
-            |`flip [times]`\n
+            |`$name [times]`\n
             |If an argument is provided, this command flips `times` coins, displaying all of the
             |flip results. If no argument is provided, this command will flip one coin.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrInt(true, 1, "times"))
+        expectedArgs = listOf(TrInt(true, 1))
         execute { ctx, args ->
             val times = args.get<Int>(0)
 
@@ -69,7 +69,7 @@ class FunCommands {
         aliases = listOf("dice", "rolldice")
 
         extDescription = """
-            |`roll [roll specs...]`\n
+            |`$name [roll specs...]`\n
             |Rolls dice according to roll specifiers. Some examples are:\n
             | - `d6`: rolls a six-sided die\n
             | - `2d8`: rolls two eight-sided dice\n
@@ -78,21 +78,21 @@ class FunCommands {
             |If no specifiers are provided, a single `d6` is used.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrGreedy(String::toDiceRoll, listOf(DiceRoll(1, 6, 0)), "rolls"))
+        expectedArgs = listOf(TrGreedy(String::toDiceRoll, listOf(DiceRoll(1, 6, 0))))
         execute { ctx, args ->
             val diceRolls = args.get<List<DiceRoll>>(0)
 
             // Check for constraints with helpful feedback.
             for (roll in diceRolls) {
-                val errored = when {
-                    roll.times !in 1..100 -> ctx.error("I can't roll a die that many times!")
-                    roll.sides !in 1..1000 -> ctx.error("I can't roll a die with that many sides!")
-                    roll.mod !in -10000..10000 -> ctx.error("That modifier is too big or small!")
-                    else -> Any()
+                val errorMsg = when {
+                    roll.times !in 1..100 -> "I can't roll a die that many times!"
+                    roll.sides !in 1..1000 -> "I can't roll a die with that many sides!"
+                    roll.mod !in -10000..10000 -> "That modifier is too big or small!"
+                    else -> ""
                 }
 
-                // [errored] is Unit when a constraint test is failed.
-                if (errored is Unit) {
+                if (errorMsg.isNotEmpty()) {
+                    ctx.error(errorMsg)
                     return@execute
                 }
             }
@@ -129,12 +129,12 @@ class FunCommands {
         aliases = listOf("select", "choose")
 
         extDescription = """
-            |`pick options...`\n
+            |`$name options...`\n
             |Picks a value from `options`, which is a list of choices separated by `|` surrounded
             |by spaces (so you can use the pipe in an option for things like `Wolfram|Alpha`).
         """.trimToDescription()
 
-        expectedArgs = listOf(TrSplit(" | ", name = "options"))
+        expectedArgs = listOf(TrSplit(" | "))
         execute { ctx, args ->
             val options = args.get<List<String>>(0)
 
@@ -180,13 +180,13 @@ class FunCommands {
         aliases = listOf("magiceightball")
 
         extDescription = """
-            |`8ball question`
+            |`$name question`
             |Ask the Magic 8 Ball a question and it will undoubtedly tell you the truth (unless
             |it's tired and wants to sleep and not answer your question, in which case you should
             |simply ask again, politely).
         """.trimToDescription()
 
-        expectedArgs = listOf(TrRest(name = "question"))
+        expectedArgs = listOf(TrRest())
         execute { ctx, args ->
             val question = args.get<String>(0)
 
@@ -209,13 +209,13 @@ class FunCommands {
         aliases = listOf("stealemotes")
 
         extDescription = """
-            |`steal [limit]`\n
+            |`$name [limit]`\n
             |Steals custom emotes from the current channel's history. If `limit` is specified, this
             |command will attempt to steal all emotes from the past `limit` messages. If not, the
             |default is the past 100 messages.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrInt(true, 100, "history"))
+        expectedArgs = listOf(TrInt(true, 100))
         execute { ctx, args ->
             val historyToSearch = args.get<Int>(0)
 
@@ -238,6 +238,37 @@ class FunCommands {
                 .forEach { pmChannel.send("*::*\n${it.joinToString("\n")}") }
 
             ctx.success("Your stolen emotes have been sent to you!")
+        }
+    }
+
+    fun emote() = command("emote") {
+        description = "Sends emotes from servers I'm in by your choice."
+        aliases = listOf("sendemote")
+
+        extDescription = """
+            |`$name [emote names...]`\n
+            |
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrGreedy(String::toString))
+        execute { ctx, args ->
+            val emoteNames = args.get<List<String>>(0)
+            val emotes = emoteNames
+                .map { ctx.jda.getEmotesByName(it, true).firstOrNull()?.asMention }
+
+            if (emotes.any { it == null }) {
+                ctx.error("I don't have access to one or more of those emotes!")
+                return@execute
+            }
+
+            // Makes the experience a bit more human.
+            val pluralOrNotEmotes = if (emotes.size == 1) {
+                "is your emote"
+            } else {
+                "are your emotes"
+            }
+
+            ctx.success("Here $pluralOrNotEmotes: ${emotes.joinToString(" ")}")
         }
     }
 }

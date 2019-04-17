@@ -4,8 +4,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
 class TrGreedy<T>(
     val conversionFunction: (String) -> T,
-    override val default: List<T> = emptyList(),
-    override val name: String = "greedy"
+    override val default: List<T> = emptyList()
 ) : Transformer<List<T>> {
 
     // Greedy is always technically optional, since it can steal at least 0 args.
@@ -35,6 +34,4 @@ class TrGreedy<T>(
             result
         }
     }
-
-    override fun toString() = name
 }

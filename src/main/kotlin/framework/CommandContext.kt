@@ -10,4 +10,7 @@ class CommandContext(
     val event: MessageReceivedEvent,
     val jda: JDA,
     val bot: Bot
-) : TextChannel by event.channel as TextChannel
+) : TextChannel by event.channel as TextChannel {
+
+    fun isOwner() = event.author.id == bot.config.ownerId
+}

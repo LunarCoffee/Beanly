@@ -14,7 +14,6 @@ import framework.transformers.TrGreedy
 import framework.transformers.TrRest
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
@@ -23,41 +22,50 @@ import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngineManager
 import javax.script.ScriptException
 import javax.script.SimpleBindings
-import kotlin.concurrent.thread
+import kotlin.system.measureNanoTime
 
 @CommandGroup("Owner")
 class OwnerCommands {
-    fun exec() = command("exec") {
+    fun ex() = command("ex") {
         description = "Executes arbitrary code. Only my owner can use this."
-        aliases = listOf("execute")
+        aliases = listOf("exec", "execute")
 
         ownerOnly = true
         noArgParsing = true
 
         extDescription = """
-            |`exec code`\n
+            |`$name code`\n
             |Executes Kotlin code in an unconstrained environment. This command can only be used by
             |my owner, for obvious security reasons. The only available global is `ctx`, the
             |`CommandContext` object associated with the current command execution. The event and
             |bot objects can be accessed from the command context.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrRest(name = "code"))
+        expectedArgs = listOf(TrRest())
         execute { ctx, args ->
+            val code = args.get<String>(0)
             var language: String
-            val codeLines = args
-                .get<String>(0)
+
+            val codeLines = code
+                .substringAfter(" ")
                 .removeSurrounding("```")
                 .also { language = it.substringBefore("\n") }
                 .substringAfter("\n")
                 .split("\n")
 
+            println(language)
             val result = when (language) {
                 "kotlin" -> executeKotlin(ctx, codeLines)
                 else -> {
                     ctx.error("You must specify a valid language in a code block!")
                     return@execute
                 }
+            }
+
+            if (result == ExecResult.ERROR) {
+                // No error message is required because the code execution function has already
+                // taken care of that.
+                return@execute
             }
 
             result.run {
@@ -67,6 +75,7 @@ class OwnerCommands {
                 |- stdout:$stdout
                 |+ Returned `${this.result}` in ~${time}ms."""
                     .trimMargin()
+                    .replace(ctx.bot.config.token, "[REDACTED]")
                     .lines()
                     .chunked(20)
                     .forEach { ctx.send("```diff\n${it.joinToString("\n")}```") }
@@ -77,51 +86,57 @@ class OwnerCommands {
     fun sh() = command("sh") {
         description = "Executes a command in a shell."
         aliases = listOf("shell")
-
         ownerOnly = true
 
-        expectedArgs = listOf(TrGreedy(String::toString, name = "command"))
+        extDescription = """
+            |`$name command`\n
+            |Executes a command in an unconstrained bash environment. This command can only be used
+            |by my owner, for obvious security reasons.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrGreedy(String::toString))
         execute { ctx, args ->
             val command = args.get<List<String>>(0).toTypedArray()
-            println(command)
-            val resultChannel = Channel<String>()
+            var process: Process? = null
 
-            thread(true, true) {
-                val process = try {
-                    ProcessBuilder(*command)
+            val time = measureNanoTime {
+                try {
+                    process = ProcessBuilder(*command)
                         .redirectOutput(ProcessBuilder.Redirect.PIPE)
                         .redirectError(ProcessBuilder.Redirect.PIPE)
                         .start()
+                        .apply { waitFor(60, TimeUnit.SECONDS) }
                 } catch (e: IOException) {
                     GlobalScope.launch {
                         ctx.error("Error starting process! Check your PMs for details.")
                         ctx.event.author.openPrivateChannel().await().send(e.toString())
                     }
-                    return@thread
+                    return@execute
                 }
+            } / 1_000_000
 
-                process.waitFor(60, TimeUnit.SECONDS)
-
-                val stdoutStderrText = process.inputStream.bufferedReader().readText()
-                val stdoutStderr = if (stdoutStderrText.isEmpty()) {
-                    "\n$stdoutStderrText"
-                } else {
-                    ""
-                }
-
-                GlobalScope.launch {
-                    resultChannel.send(
-                        """
-                        |--- GNU Bash 4.4.19 ---
-                        |- stdout/stderr:$stdoutStderr
-                        |+ Returned `0` in ~0ms.
-                        """.trimMargin()
-                    )
-                }
+            // Get correct shell environment name based on OS.
+            val osName = System.getProperty("os.name")
+            val nameOfExecutor = when {
+                "Windows" in osName -> "Windows PowerShell 6.1"
+                "Linux" in osName -> "GNU Bash 4.4.19"
+                else -> "Unknown Shell Environment"
             }
 
-            resultChannel
-                .receive()
+            // [process] should always be initialized in real use.
+            val stdoutStderrText = process!!.inputStream.bufferedReader().readText().trim()
+            val stdoutStderr = if (stdoutStderrText.isNotEmpty()) {
+                "\n$stdoutStderrText"
+            } else {
+                ""
+            }
+
+            """
+            |--- $nameOfExecutor ---
+            |- stdout/stderr:$stdoutStderr
+            |+ Returned `${process!!.exitValue()}` in ~${time}ms."""
+                .trimMargin()
+                .replace(ctx.bot.config.token, "[REDACTED]")
                 .lines()
                 .chunked(20)
                 .forEach { ctx.send("```diff\n${it.joinToString("\n")}```") }

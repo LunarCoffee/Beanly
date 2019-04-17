@@ -30,13 +30,13 @@ class UtilityCommands {
         aliases = listOf("userinfo")
 
         extDescription = """
-            |`ui [name with tag|id]`\n
+            |`$name [name with tag|id]`\n
             |Gets basic information about a user. If a name or ID is specified, this command will
             |attempt to fetch a user with them. If not, the author of the message will be used. If
             |the user is in the current server, the `mi` command may provide more detailed info.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrUser(true, name = "user"))
+        expectedArgs = listOf(TrUser(true))
         execute { ctx, args ->
             if (args.get<User>(0) is UserNotFound) {
                 ctx.error("I can't find that user!")
@@ -47,8 +47,8 @@ class UtilityCommands {
             val botOrUser = if (user.isBot) "bot" else "user"
 
             ctx.send(
-                user.run {
-                    embed {
+                embed {
+                    user.run {
                         title = "$EMOJI_MAG_GLASS  Info on $botOrUser **$asTag**:"
                         description = """
                             |**User ID**: $id
@@ -71,14 +71,14 @@ class UtilityCommands {
         aliases = listOf("memberinfo")
 
         extDescription = """
-            |`mi [name with tag|name|id]`\n
+            |`$name [name with tag|name|id]`\n
             |Gets detailed information about a member of the current server. If a name or ID is
             |specified, this command will attempt to fetch a user with them. If not, the author of
             |the message will be used. If the user is not in the current server, the `ui` command
             |may be useful.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrUser(true, name = "member"))
+        expectedArgs = listOf(TrUser(true))
         execute { ctx, args ->
             if (args.get<User>(0) is UserNotFound) {
                 ctx.error("I can't find that user!")
@@ -94,8 +94,8 @@ class UtilityCommands {
 
             ctx.send(
                 member.run {
-                    val botOrMember = if (member.user.isBot) "bot" else "member"
-                    val activity = member.activities.firstOrNull()?.name ?: "(none)"
+                    val botOrMember = if (user.isBot) "bot" else "member"
+                    val activity = activities.firstOrNull()?.name ?: "(none)"
 
                     val userRoles = if (roles.isNotEmpty()) {
                         "[${roles.joinToString { it.asMention }}]"
@@ -131,12 +131,12 @@ class UtilityCommands {
         aliases = listOf("reversepolish")
 
         extDescription = """
-            |`rpn expression`\n
+            |`$name expression`\n
             |Calculates the result of a expression in reverse Polish notation (postfix notation).
             |The supported operators are: [`+`, `-`, `*`, `/`, `**`, `%`, `&`, `|`, `^`]
         """.trimToDescription()
 
-        expectedArgs = listOf(TrSplit(name = "expression"))
+        expectedArgs = listOf(TrSplit())
         execute { ctx, args ->
             val expression = args.get<List<String>>(0)
             val stack = Stack<Double>()
@@ -195,13 +195,13 @@ class UtilityCommands {
     fun help() = command("help") {
         description = "Lists all commands or shows help for a specific command."
         extDescription = """
-            |`help [command name] [-v]`\n
+            |`$name [command name] [-v]`\n
             |With a command name, this command gets its aliases, short description, expected
             |arguments, and optionally (if the `-v` flag is set) an extended description (which
             |you're reading right now). Otherwise, this command simply lists available commands.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrWord(true, name = "command name"), TrWord(true, name = "flags"))
+        expectedArgs = listOf(TrWord(true), TrWord(true))
         execute { ctx, args ->
             val commandName = args.get<String>(0)
             val flags = args.get<String>(1)
@@ -216,25 +216,33 @@ class UtilityCommands {
                 embed {
                     if (commandName.isBlank()) {
                         title = "$EMOJI_PAGE_FACING_UP  All commands:"
+
                         for ((group, commands) in ctx.bot.groupToCommands) {
-                            val names = commands.map { it.name }
-                            description += "**${group.name}**: $names\n"
+                            // Hide owner-only commands unless the command user is the owner.
+                            if (group.name != "Owner" || ctx.isOwner()) {
+                                val names = commands.map { it.name }
+                                description += "**${group.name}**: $names\n"
+                            }
                         }
 
                         footer {
                             text = "Type '..help help' for more info."
                         }
                     } else if (command != null) {
+                        // The first line of the extended description should always be the command
+                        // usage (i.e. `help [command name] [-v]`).
+                        val usage = command.extDescription.substringBefore("\n")
+
                         title = "$EMOJI_PAGE_FACING_UP  Info on **${command.name}**:"
                         description = """
                             |**Aliases**: ${command.aliases.ifEmptyToString()}
                             |**Description**: ${command.description}
-                            |**Arguments**: ${command.expectedArgs.ifEmptyToString()}
                         """.trimMargin()
 
                         if ("v" in flags) {
                             description += "\n**Extended description**: ${command.extDescription}"
                         } else {
+                            description += "\n**Usage**: $usage"
                             footer {
                                 text = "Type '..help ${command.name} -v' for more info."
                             }

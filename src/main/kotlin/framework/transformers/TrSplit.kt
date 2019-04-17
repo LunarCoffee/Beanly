@@ -4,8 +4,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
 class TrSplit(
     private val separator: String = " ",
-    override val default: List<String> = emptyList(),
-    override val name: String = "split"
+    override val default: List<String> = emptyList()
 ) : Transformer<List<String>> {
 
     // Split is always technically optional.
@@ -16,6 +15,4 @@ class TrSplit(
             args.clear()
         }
     }
-
-    override fun toString() = name
 }

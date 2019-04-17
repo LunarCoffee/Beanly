@@ -5,8 +5,7 @@ import java.math.BigInteger
 
 class TrBigInt(
     override val optional: Boolean = false,
-    override val default: BigInteger = BigInteger.ZERO,
-    override val name: String = "number"
+    override val default: BigInteger = BigInteger.ZERO
 ) : Transformer<BigInteger> {
 
     override fun transform(event: MessageReceivedEvent, args: MutableList<String>): BigInteger {
@@ -16,6 +15,4 @@ class TrBigInt(
             args.removeAt(0).toBigInteger()
         }
     }
-
-    override fun toString() = name
 }

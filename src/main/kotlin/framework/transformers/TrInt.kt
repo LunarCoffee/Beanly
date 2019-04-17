@@ -4,8 +4,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
 class TrInt(
     override val optional: Boolean = false,
-    override val default: Int = 0,
-    override val name: String = "number"
+    override val default: Int = 0
 ) : Transformer<Int> {
 
     override fun transform(event: MessageReceivedEvent, args: MutableList<String>): Int {
@@ -15,6 +14,4 @@ class TrInt(
             args.removeAt(0).toInt()
         }
     }
-
-    override fun toString() = name
 }

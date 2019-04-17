@@ -2,8 +2,10 @@
 
 package beanly.exts
 
+import beanly.consts.EMOJI_LAPTOP_COMPUTER
 import beanly.consts.EMOJI_OPEN_FILE_FOLDER
 import beanly.consts.EMOJI_PING_PONG
+import beanly.exts.utility.SystemStatistics
 import beanly.trimToDescription
 import framework.CommandGroup
 import framework.dsl.command
@@ -25,7 +27,7 @@ class MiscCommands {
         aliases = listOf("pong", "peng")
 
         extDescription = """
-            |`ping`\n
+            |`$name`\n
             |Shows three values that represent the heartbeat, API, and stack allocation latencies.
         """.trimToDescription()
 
@@ -50,7 +52,7 @@ class MiscCommands {
         aliases = listOf("linesofcode")
 
         extDescription = """
-            |`loc`\n
+            |`$name`\n
             |Shows various project statistics, including line counts, file counts, directory
             |counts, and character counts.
         """.trimToDescription()
@@ -94,12 +96,12 @@ class MiscCommands {
         aliases = listOf("rand", "random")
 
         extDescription = """
-            |`rng low high [-s]`\n
+            |`$name low high [-s]`\n
             |Generates a random number within [`low`, `high`]. If the `-s` flag is set, a secure
             |source of randomness will be used.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrInt(name = "low"), TrInt(name = "high"), TrWord(true, "flags"))
+        expectedArgs = listOf(TrInt(), TrInt(), TrWord(true))
         execute { ctx, args ->
             val lowerBound = args.get<Int>(0)
             val upperBound = args.get<Int>(1) + 1
@@ -120,13 +122,42 @@ class MiscCommands {
         aliases = listOf("repo", "gitlab")
 
         extDescription = """
-            |`git`\n
+            |`$name`\n
             |Unless you are a developer, this command probably has no use. My code is licensed
             |under the MIT license.
         """.trimToDescription()
 
         execute { ctx, _ ->
             ctx.success("<https://gitlab.com/LunarCoffee/beanly>")
+        }
+    }
+
+    fun stats() = command("stats") {
+        description = "Gets various stats about my... existence?"
+        aliases = listOf("statistics")
+
+        extDescription = """
+            |`$name`\n
+            |Gets various stats about me, like how much RAM I'm eating up, the language I'm written
+            |in, how long I've been awake, and what architecture the CPU I'm running on is.
+        """.trimToDescription()
+
+        execute { ctx, _ ->
+            ctx.send(
+                embed {
+                    SystemStatistics().run {
+                        title = "$EMOJI_LAPTOP_COMPUTER  System statistics:"
+                        description = """
+                            |**Memory usage**: ${totalMemory - freeMemory}/$totalMemory MB
+                            |**Language**: $language
+                            |**Uptime**: $uptime
+                            |**CPU architecture**: $cpuArchitecture
+                            |**Total threads**: $totalThreads
+                            |**Running threads**: $runningThreads
+                        """.trimMargin()
+                    }
+                }
+            )
         }
     }
 }

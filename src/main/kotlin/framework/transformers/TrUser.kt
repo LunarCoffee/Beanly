@@ -6,8 +6,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
 class TrUser(
     override val optional: Boolean = false,
-    override var default: User? = null,
-    override val name: String = "user"
+    override var default: User? = null
 ) : Transformer<User?> {
 
     override fun transform(event: MessageReceivedEvent, args: MutableList<String>): User? {
@@ -23,6 +22,4 @@ class TrUser(
             else -> event.jda.getUsersByName(input, true).firstOrNull()
         } ?: UserNotFound()
     }
-
-    override fun toString() = name
 }

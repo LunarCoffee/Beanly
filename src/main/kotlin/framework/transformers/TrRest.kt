@@ -4,8 +4,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
 class TrRest(
     override val optional: Boolean = false,
-    override val default: String = "",
-    override val name: String = "rest"
+    override val default: String = ""
 ) : Transformer<String> {
 
     override fun transform(event: MessageReceivedEvent, args: MutableList<String>): String {
@@ -17,6 +16,4 @@ class TrRest(
             }
         }
     }
-
-    override fun toString() = name
 }
