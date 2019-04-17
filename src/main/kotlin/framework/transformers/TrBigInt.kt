@@ -1,5 +1,6 @@
 package framework.transformers
 
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import java.math.BigInteger
 
 class TrBigInt(
@@ -8,13 +9,11 @@ class TrBigInt(
     override val name: String = "number"
 ) : Transformer<BigInteger> {
 
-    override fun transform(args: MutableList<String>, taken: MutableList<String>): BigInteger {
+    override fun transform(event: MessageReceivedEvent, args: MutableList<String>): BigInteger {
         return if (optional && args.firstOrNull()?.toBigIntegerOrNull() == null) {
             default
         } else {
-            args[0].toBigInteger().also {
-                taken += args.removeAt(0)
-            }
+            args.removeAt(0).toBigInteger()
         }
     }
 

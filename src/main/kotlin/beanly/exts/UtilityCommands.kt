@@ -5,6 +5,7 @@ package beanly.exts
 import beanly.consts.EMOJI_MAG_GLASS
 import beanly.consts.EMOJI_PAGE_FACING_UP
 import beanly.consts.TIME_FORMATTER
+import beanly.gmtToEst
 import beanly.ifEmptyToString
 import beanly.trimToDescription
 import framework.CommandGroup
@@ -16,6 +17,8 @@ import framework.extensions.success
 import framework.transformers.TrSplit
 import framework.transformers.TrUser
 import framework.transformers.TrWord
+import framework.transformers.utility.UserNotFound
+import net.dv8tion.jda.api.entities.User
 import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -27,7 +30,7 @@ class UtilityCommands {
         aliases = listOf("userinfo")
 
         extDescription = """
-            |`ui [name|id]`\n
+            |`ui [name with tag|id]`\n
             |Gets basic information about a user. If a name or ID is specified, this command will
             |attempt to fetch a user with them. If not, the author of the message will be used. If
             |the user is in the current server, the `mi` command may provide more detailed info.
@@ -35,6 +38,11 @@ class UtilityCommands {
 
         expectedArgs = listOf(TrUser(true, name = "user"))
         execute { ctx, args ->
+            if (args.get<User>(0) is UserNotFound) {
+                ctx.error("I can't find that user!")
+                return@execute
+            }
+
             val user = args[0] ?: ctx.event.author
             val botOrUser = if (user.isBot) "bot" else "user"
 
@@ -44,7 +52,7 @@ class UtilityCommands {
                         title = "$EMOJI_MAG_GLASS  Info on $botOrUser **$asTag**:"
                         description = """
                             |**User ID**: $id
-                            |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
+                            |**Creation time**: ${timeCreated.gmtToEst().format(TIME_FORMATTER)}
                             |**Avatar ID**: ${avatarId ?: "(none)"}
                             |**Mention**: $asMention
                         """.trimMargin()
@@ -63,11 +71,20 @@ class UtilityCommands {
         aliases = listOf("memberinfo")
 
         extDescription = """
-
+            |`mi [name with tag|name|id]`\n
+            |Gets detailed information about a member of the current server. If a name or ID is
+            |specified, this command will attempt to fetch a user with them. If not, the author of
+            |the message will be used. If the user is not in the current server, the `ui` command
+            |may be useful.
         """.trimToDescription()
 
         expectedArgs = listOf(TrUser(true, name = "member"))
         execute { ctx, args ->
+            if (args.get<User>(0) is UserNotFound) {
+                ctx.error("I can't find that user!")
+                return@execute
+            }
+
             val member = ctx.event.guild.getMember(args[0] ?: ctx.event.author)
 
             if (member == null) {
@@ -80,7 +97,7 @@ class UtilityCommands {
                     val botOrMember = if (member.user.isBot) "bot" else "member"
                     val activity = member.activities.firstOrNull()?.name ?: "(none)"
 
-                    val userRoles = if (!roles.isEmpty()) {
+                    val userRoles = if (roles.isNotEmpty()) {
                         "[${roles.joinToString { it.asMention }}]"
                     } else {
                         "(none)"
@@ -93,8 +110,8 @@ class UtilityCommands {
                             |**Nickname**: ${nickname ?: "(none)"}
                             |**Status**: ${onlineStatus.key}
                             |**Activity**: $activity
-                            |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
-                            |**Join time**: ${timeJoined.format(TIME_FORMATTER)}
+                            |**Creation time**: ${timeCreated.gmtToEst().format(TIME_FORMATTER)}
+                            |**Join time**: ${timeJoined.gmtToEst().format(TIME_FORMATTER)}
                             |**Avatar ID**: ${user.avatarId ?: "(none)"}
                             |**Mention**: $asMention
                             |**Roles**: $userRoles

@@ -1,18 +1,18 @@
 package framework.transformers
 
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+
 class TrDouble(
     override val optional: Boolean = false,
     override val default: Double = 0.0,
     override val name: String = "decimal"
 ) : Transformer<Double> {
 
-    override fun transform(args: MutableList<String>, taken: MutableList<String>): Double {
+    override fun transform(event: MessageReceivedEvent, args: MutableList<String>): Double {
         return if (optional && args.firstOrNull()?.toDoubleOrNull() == null) {
             default
         } else {
-            args[0].toDouble().also {
-                taken += args.removeAt(0)
-            }
+            args.removeAt(0).toDouble()
         }
     }
 

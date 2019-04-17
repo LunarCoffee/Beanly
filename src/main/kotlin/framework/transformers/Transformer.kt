@@ -1,11 +1,13 @@
 package framework.transformers
 
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+
 interface Transformer<T> {
     val optional: Boolean
     val default: T
     val name: String
 
-    fun transform(args: MutableList<String>, taken: MutableList<String>): T
+    fun transform(event: MessageReceivedEvent, args: MutableList<String>): T
 
     override fun toString(): String
 }

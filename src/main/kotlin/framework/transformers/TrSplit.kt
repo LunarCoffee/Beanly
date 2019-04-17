@@ -1,5 +1,7 @@
 package framework.transformers
 
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+
 class TrSplit(
     private val separator: String = " ",
     override val default: List<String> = emptyList(),
@@ -9,9 +11,8 @@ class TrSplit(
     // Split is always technically optional.
     override val optional = true
 
-    override fun transform(args: MutableList<String>, taken: MutableList<String>): List<String> {
+    override fun transform(event: MessageReceivedEvent, args: MutableList<String>): List<String> {
         return args.joinToString(" ").split(separator).also {
-            taken += args
             args.clear()
         }
     }

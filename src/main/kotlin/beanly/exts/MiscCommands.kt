@@ -120,7 +120,9 @@ class MiscCommands {
         aliases = listOf("repo", "gitlab")
 
         extDescription = """
-
+            |`git`\n
+            |Unless you are a developer, this command probably has no use. My code is licensed
+            |under the MIT license.
         """.trimToDescription()
 
         execute { ctx, _ ->

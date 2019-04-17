@@ -12,10 +12,13 @@ import beanly.trimToDescription
 import framework.CommandGroup
 import framework.dsl.command
 import framework.dsl.embed
+import framework.extensions.await
 import framework.extensions.error
 import framework.extensions.send
+import framework.extensions.success
 import framework.transformers.TrGreedy
 import framework.transformers.TrInt
+import framework.transformers.TrRest
 import framework.transformers.TrSplit
 import kotlin.random.Random
 
@@ -31,7 +34,7 @@ class FunCommands {
             |flip results. If no argument is provided, this command will flip one coin.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrInt(true, 1, "times to flip"))
+        expectedArgs = listOf(TrInt(true, 1, "times"))
         execute { ctx, args ->
             val times = args.get<Int>(0)
 
@@ -44,13 +47,17 @@ class FunCommands {
             val heads = flips.count { it == "heads" }
             val tails = flips.count { it == "tails" }
 
+            // Only show the resultant flip if only one coin was flipped, and count each if more
+            // than one coin was flipped.
+            val result = if (times == 1) {
+                flips[0]
+            } else {
+                "$heads heads and $tails tails"
+            }
+
             ctx.send(
                 embed {
-                    title = "$EMOJI_RADIO_BUTTON  You flipped ${if (times == 1) {
-                        flips[0]
-                    } else {
-                        "$heads heads and $tails tails"
-                    }}!"
+                    title = "$EMOJI_RADIO_BUTTON  You flipped $result!"
                     description = flips.toString()
                 }
             )
@@ -71,28 +78,39 @@ class FunCommands {
             |If no specifiers are provided, a single `d6` is used.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrGreedy(String::toDiceRoll, listOf(DiceRoll(1, 6, 0))))
+        expectedArgs = listOf(TrGreedy(String::toDiceRoll, listOf(DiceRoll(1, 6, 0)), "rolls"))
         execute { ctx, args ->
             val diceRolls = args.get<List<DiceRoll>>(0)
 
-            if (diceRolls.any { it.times > 1000 || it.sides > 1000 || it.mod !in -10000..10000 }) {
-                ctx.error("At least one of your rolls had a number that was too big or small!")
-                return@execute
+            // Check for constraints with helpful feedback.
+            for (roll in diceRolls) {
+                val errored = when {
+                    roll.times !in 1..100 -> ctx.error("I can't roll a die that many times!")
+                    roll.sides !in 1..1000 -> ctx.error("I can't roll a die with that many sides!")
+                    roll.mod !in -10000..10000 -> ctx.error("That modifier is too big or small!")
+                    else -> Any()
+                }
+
+                // [errored] is Unit when a constraint test is failed.
+                if (errored is Unit) {
+                    return@execute
+                }
             }
 
+            // Generate a list of lists that hold each result for each roll.
             val results = diceRolls
-                .map { roll -> List(roll.times) { Random.nextInt(1, roll.sides) } }
+                .map { roll -> List(roll.times) { Random.nextInt(1, roll.sides + 1) } }
 
             // Sum all the results of each individual roll and add all the modifiers.
             val total = results.flatten().sum() + diceRolls.sumBy { it.mod }
 
+            // If the user rolls more than one die, make the embed title "You rolled a total of..."
+            // instead of "You rolled a..." if only one die was rolled. Makes it a bit more human.
+            val totalOfOrEmpty = if (diceRolls.size > 1) "total of " else ""
+
             ctx.send(
                 embed {
-                    title = "$EMOJI_GAME_DIE  You rolled a ${if (diceRolls.size != 1) {
-                        "total of "
-                    } else {
-                        ""
-                    }}$total!"
+                    title = "$EMOJI_GAME_DIE  You rolled a $totalOfOrEmpty$total!"
 
                     description = results.zip(diceRolls).joinToString("\n") { (res, roll) ->
                         val modifierSign = if (roll.mod <= 0) "" else "+"
@@ -116,7 +134,7 @@ class FunCommands {
             |by spaces (so you can use the pipe in an option for things like `Wolfram|Alpha`).
         """.trimToDescription()
 
-        expectedArgs = listOf(TrSplit(" | "))
+        expectedArgs = listOf(TrSplit(" | ", name = "options"))
         execute { ctx, args ->
             val options = args.get<List<String>>(0)
 
@@ -125,10 +143,9 @@ class FunCommands {
                 return@execute
             }
 
-            val choice = options.random()
             ctx.send(
                 embed {
-                    title = "$EMOJI_THINKING  I choose **$choice**!"
+                    title = "$EMOJI_THINKING  I choose **${options.random()}**!"
                     description = options.toString()
                 }
             )
@@ -162,13 +179,65 @@ class FunCommands {
         description = "Uncover secrets with the 100% reliable Magic 8 Ball!"
         aliases = listOf("magiceightball")
 
-        execute { ctx, _ ->
+        extDescription = """
+            |`8ball question`
+            |Ask the Magic 8 Ball a question and it will undoubtedly tell you the truth (unless
+            |it's tired and wants to sleep and not answer your question, in which case you should
+            |simply ask again, politely).
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrRest(name = "question"))
+        execute { ctx, args ->
+            val question = args.get<String>(0)
+
+            if (question.isBlank()) {
+                ctx.error("You have to ask me a question!")
+                return@execute
+            }
+
             ctx.send(
                 embed {
                     title = "$EMOJI_BILLIARD_BALL  The 8-ball says:"
                     description = responses.random()
                 }
             )
+        }
+    }
+
+    fun steal() = command("steal") {
+        description = "Steals emotes from message history in the current channel."
+        aliases = listOf("stealemotes")
+
+        extDescription = """
+            |`steal [limit]`\n
+            |Steals custom emotes from the current channel's history. If `limit` is specified, this
+            |command will attempt to steal all emotes from the past `limit` messages. If not, the
+            |default is the past 100 messages.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrInt(true, 100, "history"))
+        execute { ctx, args ->
+            val historyToSearch = args.get<Int>(0)
+
+            if (historyToSearch !in 1..1000) {
+                ctx.error("I can't steal from that many messages in history!")
+                return@execute
+            }
+
+            val pmChannel = ctx.event.author.openPrivateChannel().await()
+            pmChannel.success("Your emotes are being processed!")
+
+            ctx.event
+                .channel
+                .iterableHistory
+                .take(historyToSearch)
+                .flatMap { it.emotes }
+                .distinct()
+                .map { "**${it.name}**: <${it.imageUrl}>" }
+                .chunked(20)
+                .forEach { pmChannel.send("*::*\n${it.joinToString("\n")}") }
+
+            ctx.success("Your stolen emotes have been sent to you!")
         }
     }
 }

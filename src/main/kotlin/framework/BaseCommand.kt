@@ -13,6 +13,7 @@ interface BaseCommand {
 
     var deleteSender: Boolean
     var ownerOnly: Boolean
+    var noArgParsing: Boolean
 
     var execute: suspend (CommandContext, CommandArguments) -> Unit
 

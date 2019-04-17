@@ -1,5 +1,7 @@
 package framework.transformers
 
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+
 class TrGreedy<T>(
     val conversionFunction: (String) -> T,
     override val default: List<T> = emptyList(),
@@ -9,7 +11,7 @@ class TrGreedy<T>(
     // Greedy is always technically optional, since it can steal at least 0 args.
     override val optional = true
 
-    override fun transform(args: MutableList<String>, taken: MutableList<String>): List<T> {
+    override fun transform(event: MessageReceivedEvent, args: MutableList<String>): List<T> {
         if (args.isEmpty()) {
             return default
         }
@@ -21,12 +23,11 @@ class TrGreedy<T>(
             try {
                 val item = args[0 + numTaken++]
                 result.add(conversionFunction(item))
-                taken += item
             } catch (e: Exception) {
                 break
             }
         }
-        args.removeAll(args.take(numTaken - 1))
+        args.removeAll(args.take(numTaken))
 
         return if (result.isEmpty()) {
             default

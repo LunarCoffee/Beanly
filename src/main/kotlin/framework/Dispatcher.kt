@@ -19,50 +19,97 @@ class Dispatcher(
     fun addCommand(command: BaseCommand) = commands.add(command)
     fun registerCommands() = jda.addEventListener(this)
 
-    override fun onMessageReceived(e: MessageReceivedEvent) {
+    override fun onMessageReceived(event: MessageReceivedEvent) {
         // Keep things sane (PMs and group chats aren't allowed because I'm lazy).
-        if (!e.message.contentRaw.startsWith(prefix)
-            || e.author.isBot
-            || e.channelType == ChannelType.PRIVATE
-            || e.channelType == ChannelType.PRIVATE
+        if (!event.message.contentRaw.startsWith(prefix)
+            || event.author.isBot
+            || event.channelType == ChannelType.PRIVATE
+            || event.channelType == ChannelType.PRIVATE
         ) {
             return
         }
 
-        val content = e.message.contentRaw
+        val content = event.message.contentRaw
         val name = content.substringAfter(prefix).substringBefore(" ")
 
         val command = commands
-            .find { command -> name in command.names }
+            .find { name in it.names }
             ?: return
 
-        if (command.ownerOnly && e.author.id == bot.config.ownerId) {
+        // Owner only command and user ID check.
+        if (command.ownerOnly && event.author.id != bot.config.ownerId) {
             GlobalScope.launch {
-                e.channel.error("You need to be the owner to use that command!")
+                event.channel.error("You need to be the owner to use that command!")
             }
             return
         }
 
         if (command.deleteSender) {
-            e.message.delete().queue()
+            event.message.delete().queue()
         }
 
-        // [rawArgs] are the raw tokens found by splitting the message by spaces (not including the
-        // command name, which is technically the first argument. This list will be removed from
-        // by the type transformers in [command.expectedArgs].
-        val rawArgs = content
-            .split("""\s+""".toRegex())
-            .drop(1)
-            .toMutableList()
+        val rawArgs = if (command.noArgParsing) {
+            mutableListOf(content.substringAfter(command.name).drop(1))
+        } else {
+            // This is the content split by spaces, unless there are quotes around parts of it.
+            parseArgs(content).toMutableList()
+        }
 
-        // This list will be added to as the arguments in [rawArgs] are transformed and removed.
-        val taken = mutableListOf<String>()
+        // Transform argument types, and return if not all arguments were used, which means extra
+        // arguments, which shouldn't be allowed.
+        val commandArgs = command.expectedArgs.map { it.transform(event, rawArgs) }
+        if (rawArgs.isNotEmpty()) {
+            return
+        }
 
-        // Actually transform the arguments and execute the command with them.
-        val commandArgs = command.expectedArgs.map { it.transform(rawArgs, taken) }
-        command.dispatch(CommandContext(e, jda, bot), CommandArguments(commandArgs))
+        println(commandArgs)
+
+        command.dispatch(CommandContext(event, jda, bot), CommandArguments(commandArgs))
 
         // TODO: add proper logging
-        println("${e.author.name} used command $command!\n${command.aliases + command.name}")
+        println("${event.author.name} used command $command!\n${command.aliases + command.name}")
+    }
+
+    private fun parseArgs(content: String): List<String> {
+        val args = mutableListOf<String>()
+
+        var currentArg = ""
+        var inQuotes = false
+        var prevWasQuote = false
+
+        for (char in content) {
+            if (char == '"') {
+                // This is when the terminating quote comes in.
+                if (inQuotes) {
+                    args += currentArg
+                    currentArg = ""
+                    prevWasQuote = true
+                }
+                inQuotes = !inQuotes
+                continue
+            }
+
+            // If the character doesn't mean anything special, just add it.
+            if (char != ' ') {
+                currentArg += char
+                continue
+            }
+
+            // If the character is a space and we're in quotes, just add it. If we're not and the
+            // last character was not a quote (which would be a situation like <"arg 1" arg2>),
+            // we're done parsing the current arg, since it's the start of a new arg.
+            if (inQuotes) {
+                currentArg += " "
+            } else if (!prevWasQuote) {
+                args += currentArg
+                currentArg = ""
+            }
+
+            prevWasQuote = false
+        }
+
+        // Remove the command name (like <..rpn>) and any trailing blank strings that interfere
+        // with arglist length checking.
+        return (args + currentArg).drop(1).dropLastWhile { it.isBlank() }
     }
 }
