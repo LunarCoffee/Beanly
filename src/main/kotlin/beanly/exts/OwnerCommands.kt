@@ -2,20 +2,23 @@
 
 package beanly.exts
 
+import beanly.consts.EMBED_COLOR
 import beanly.exts.utility.ExecResult
 import beanly.trimToDescription
 import framework.CommandContext
 import framework.CommandGroup
 import framework.dsl.command
+import framework.dsl.embed
 import framework.extensions.await
 import framework.extensions.error
 import framework.extensions.send
 import framework.transformers.TrGreedy
+import framework.transformers.TrInt
 import framework.transformers.TrRest
+import framework.transformers.TrWord
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import java.io.*
 import java.util.concurrent.TimeUnit
@@ -143,6 +146,55 @@ class OwnerCommands {
         }
     }
 
+    fun smsg() = command("smsg") {
+        description = "Sends a message. Only my owner can use this."
+        aliases = listOf("sendmsg")
+
+        ownerOnly = true
+        deleteSender = true
+
+        extDescription = """
+            |`smsg message`
+            |Sends a message to the command user's channel. This is an owner only command as to
+            |prevent spam.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrRest())
+        execute { ctx, args ->
+            val content = args.get<String>(0)
+            ctx.send(content)
+        }
+    }
+
+    fun sebd() = command("sebd") {
+        description = "Sends an embed. Only my owner can use this."
+        aliases = listOf("sendembed")
+
+        ownerOnly = true
+        deleteSender = true
+
+        extDescription = """
+            |`smsg message`
+            |Sends a message embed to the command user's channel. This is an owner only command as
+            |to prevent spam. For more advanced usage, it is advised to use the `ex` command.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(), TrWord(), TrInt(true, EMBED_COLOR))
+        execute { ctx, args ->
+            val titleText = args.get<String>(0)
+            val descriptionText = args.get<String>(1)
+            val embedColor = args.get<Int>(2)
+
+            ctx.send(
+                embed {
+                    title = titleText
+                    description = descriptionText
+                    color = embedColor
+                }
+            )
+        }
+    }
+
     private suspend fun executeKotlin(ctx: CommandContext, codeLines: List<String>): ExecResult {
         val importStatement = """^\s*import\s+([A-z0-9]+\.)*[A-z0-9]+""".toRegex()
         val scriptEngine = ScriptEngineManager()
@@ -165,13 +217,11 @@ class OwnerCommands {
         val tempStderr = ByteArrayOutputStream().also { System.setErr(PrintStream(it)) }
 
         val (time, result) = try {
-            withTimeout(60_000) {
-                scriptEngine.eval(
-                    // This prepends imports and adds the actual code.
-                    File("src/main/resources/ek_prelude.txt").readText().format(imports, code),
-                    SimpleBindings().apply { put("ctx", ctx) }
-                ) as Pair<*, *>
-            }
+            scriptEngine.eval(
+                // This prepends imports and adds the actual code.
+                File("src/main/resources/ek_prelude.txt").readText().format(imports, code),
+                SimpleBindings().apply { put("ctx", ctx) }
+            ) as Pair<*, *>
         } catch (e: ScriptException) {
             ctx.error("Error during execution! Check your PMs for details.")
             ctx.event.author.openPrivateChannel().await().send(e.toString())

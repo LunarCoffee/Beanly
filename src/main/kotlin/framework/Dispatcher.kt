@@ -66,7 +66,7 @@ class Dispatcher(
 
         command.dispatch(CommandContext(event, jda, bot), CommandArguments(commandArgs))
 
-        // TODO: add proper logging
+        // TODO: Add proper logging with kotlin-logging.
         println("${event.author.name} used command $command!\n${command.aliases + command.name}")
     }
 

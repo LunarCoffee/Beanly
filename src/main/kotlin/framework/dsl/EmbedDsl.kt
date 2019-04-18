@@ -14,6 +14,7 @@ class EmbedDsl {
     private var author: MessageEmbed.AuthorInfo? = null
     private var footer: MessageEmbed.Footer? = null
     private var thumbnail: MessageEmbed.Thumbnail? = null
+    private var image: MessageEmbed.ImageInfo? = null
 
     private val embedFields = mutableListOf<MessageEmbed.Field>()
 
@@ -57,14 +58,21 @@ class EmbedDsl {
         var proxyIconUrl: String? = null
     }
 
-    fun thumbnail(init: ThumbnailDsl.() -> Unit) {
-        val thumbnailDsl = ThumbnailDsl().apply(init)
+    fun thumbnail(init: ImageOrThumbnailDsl.() -> Unit) {
+        val thumbnailDsl = ImageOrThumbnailDsl().apply(init)
         thumbnail = thumbnailDsl.run {
             MessageEmbed.Thumbnail(url, proxyUrl, width, height)
         }
     }
 
-    inner class ThumbnailDsl {
+    fun image(init: ImageOrThumbnailDsl.() -> Unit) {
+        val imageDsl = ImageOrThumbnailDsl().apply(init)
+        image = imageDsl.run {
+            MessageEmbed.ImageInfo(url, proxyUrl, width, height)
+        }
+    }
+
+    inner class ImageOrThumbnailDsl {
         var url: String? = null
         var proxyUrl: String? = null
         var width: Int = 50
@@ -86,7 +94,7 @@ class EmbedDsl {
             author,
             null,
             footer,
-            null,
+            image,
             embedFields
         )
     }

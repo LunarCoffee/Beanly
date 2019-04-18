@@ -2,11 +2,9 @@
 
 package beanly.exts
 
-import beanly.consts.EMOJI_BILLIARD_BALL
-import beanly.consts.EMOJI_GAME_DIE
-import beanly.consts.EMOJI_RADIO_BUTTON
-import beanly.consts.EMOJI_THINKING
+import beanly.consts.*
 import beanly.exts.utility.DiceRoll
+import beanly.exts.utility.XkcdComic
 import beanly.exts.utility.toDiceRoll
 import beanly.trimToDescription
 import framework.CommandGroup
@@ -17,7 +15,8 @@ import framework.extensions.error
 import framework.extensions.send
 import framework.extensions.success
 import framework.transformers.*
-import org.jetbrains.kotlin.resolve.selectMostSpecificInEachOverridableGroup
+import io.github.rybalkinsd.kohttp.dsl.httpGet
+import io.github.rybalkinsd.kohttp.ext.url
 import kotlin.random.Random
 
 @CommandGroup("Fun")
@@ -97,7 +96,7 @@ class FunCommands {
 
             // Generate a list of lists that hold each result for each roll.
             val results = diceRolls
-                .map { roll -> List(roll.times) { Random.nextInt(1, roll.sides + 1) } }
+                .map { roll -> List(roll.times) { Random.nextInt(roll.sides) + 1 } }
 
             // Sum all the results of each individual roll and add all the modifiers.
             val total = results.flatten().sum() + diceRolls.sumBy { it.mod }
@@ -272,13 +271,64 @@ class FunCommands {
 
     fun xkcd() = command("xkcd") {
         extDescription = """
-            |`xkcd [number] [-r]
+            |`xkcd [number|-r]`\n
+            |Gets and displays information about the xkcd comic number `number`. If `number` is not
+            |specified, the latest comic is used. If the `-r` flag is set, a random comic will be
+            |used. Of course, this command also displays the comic itself, not just information.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrInt(true), TrWord(true))
+        expectedArgs = listOf(TrWord(true))
         execute { ctx, args ->
-            val which = args.get<Int>(0)
-            val randomFlag = args.get<String>(1)
+            val whichOrRandom = args.get<String>(0)
+            val latestNumber = getXkcd(null).num.toInt()
+
+            val which = when (whichOrRandom) {
+                "" -> latestNumber
+                "-r" -> Random.nextInt(latestNumber) + 1
+                else -> whichOrRandom.toIntOrNull()
+            }
+
+            if (which == null || which !in 1..latestNumber) {
+                ctx.error("I can't get the comic with that number!")
+                return@execute
+            }
+
+            val comic = getXkcd(which)
+            ctx.send(
+                embed {
+                    comic.run {
+                        this@embed.title = "$EMOJI_FRAMED_PICTURE  XKCD Comic #**$num**:"
+                        description = """
+                            |**Title**: $title
+                            |**Alt text**: $alt
+                            |**Release date**: ${getDate()}
+                        """.trimMargin()
+
+                        image {
+                            url = this@run.img.also(::println)
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    private fun getXkcd(which: Int?): XkcdComic {
+        return if (which == 404) {
+            // Accessing the API endpoint for 404 results in, well, a 404. Despite that, the comic
+            // canonically exists as stated by Randall, so this is a special comic just for that.
+            XkcdComic.COMIC_404
+        } else {
+            GSON.fromJson(
+                httpGet {
+                    if (which != null) {
+                        url("https://xkcd.com/$which/info.0.json")
+                    } else {
+                        url("https://xkcd.com/info.0.json")
+                    }
+                }.body()!!.string().also(::println),
+                XkcdComic::class.java
+            ).also(::println)
         }
     }
 }
