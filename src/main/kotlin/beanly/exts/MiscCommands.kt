@@ -150,8 +150,11 @@ class MiscCommands {
                         description = """
                             |**Memory usage**: ${totalMemory - freeMemory}/$totalMemory MB
                             |**Language**: $language
+                            |**JVM version**: $jvmVersion
+                            |**Operating system**: $osName
                             |**Uptime**: $uptime
                             |**CPU architecture**: $cpuArchitecture
+                            |**Logical cores available**: $logicalProcessors
                             |**Total threads**: $totalThreads
                             |**Running threads**: $runningThreads
                         """.trimMargin()

@@ -16,10 +16,8 @@ import framework.extensions.await
 import framework.extensions.error
 import framework.extensions.send
 import framework.extensions.success
-import framework.transformers.TrGreedy
-import framework.transformers.TrInt
-import framework.transformers.TrRest
-import framework.transformers.TrSplit
+import framework.transformers.*
+import org.jetbrains.kotlin.resolve.selectMostSpecificInEachOverridableGroup
 import kotlin.random.Random
 
 @CommandGroup("Fun")
@@ -246,7 +244,7 @@ class FunCommands {
         aliases = listOf("sendemote")
 
         extDescription = """
-            |`$name [emote names...]`\n
+            |`$name names...`\n
             |
         """.trimToDescription()
 
@@ -269,6 +267,18 @@ class FunCommands {
             }
 
             ctx.success("Here $pluralOrNotEmotes: ${emotes.joinToString(" ")}")
+        }
+    }
+
+    fun xkcd() = command("xkcd") {
+        extDescription = """
+            |`xkcd [number] [-r]
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrInt(true), TrWord(true))
+        execute { ctx, args ->
+            val which = args.get<Int>(0)
+            val randomFlag = args.get<String>(1)
         }
     }
 }

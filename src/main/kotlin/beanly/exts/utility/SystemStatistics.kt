@@ -16,7 +16,11 @@ class SystemStatistics {
     }
 
     val cpuArchitecture = retrieveCpuArchitecture()
+    val logicalProcessors = Runtime.getRuntime().availableProcessors()
+
+    val osName = System.getProperty("os.name") ?: "(unknown)"
     val language = "Kotlin 1.3.30"
+    val jvmVersion = System.getProperty("java.version") ?: "(unknown)"
 
     var runningThreads: Int
     val totalThreads = Thread
