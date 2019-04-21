@@ -1,18 +1,20 @@
 package framework
 
-import net.dv8tion.jda.api.JDA
+import framework.annotations.CommandGroup
 import net.dv8tion.jda.api.JDABuilder
-import net.dv8tion.jda.api.entities.Activity
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 
-class Bot(configPath: String) {
-    val config = Yaml().loadAs(File(configPath).readText(), BotConfig::class.java)!!
+open class Bot(configPath: String) {
+    val config = Yaml()
+        .loadAs(File(configPath).readText(), BotConfig::class.java)!!
+        .also { currentConfig = it }
 
-    private val jda: JDA = JDABuilder()
+    val jda = JDABuilder()
         .setToken(config.token)
-        .build()
+        .build()!!
 
+    @Suppress("LeakingThis")
     private val dispatcher = Dispatcher(jda, this, config.prefix)
     private val classLoader = ClassLoader.getSystemClassLoader()
 
@@ -37,20 +39,41 @@ class Bot(configPath: String) {
 
     val commands = groupToCommands.values.flatten()
 
-    var activity: Activity?
-        get() = jda.presence.activity
-        set(value) {
-            jda.presence.activity = value
-        }
+    init {
+        // Register all classes marked with the [ListenerGroup] annotation as event listeners.
+        // Most, if not all of this complexity, is simply checking for the correct types and
+        // constructor signatures to prevent mistakes. And very painful reflection.
+        jda.addEventListener(
+            *File("src/main/kotlin/beanly")
+                .walk()
+                .filter { it.name.endsWith("Listener.kt") }
+                .map { classFile ->
+                    classLoader
+                        .loadClass("beanly.exts.${classFile.nameWithoutExtension}")
+                        .constructors
+                        .find {
+                            // Make sure the constructor takes one argument of type [Bot].
+                            it.parameters.run {
+                                size == 1 && get(0).type.name == Bot::class.java.name
+                            }
+                        }!!.newInstance(this)
+                }
+                .toList()
+                .toTypedArray()
+        )
+    }
 
-    fun start() = loadCommands()
-
-    private fun loadCommands() {
+    fun loadCommands() {
         groupToCommands
             .values
             .flatten()
             .forEach { dispatcher.addCommand(it) }
 
         dispatcher.registerCommands()
+    }
+
+    companion object {
+        // By way of [Bot.currentConfig], this is only read from, never modified.
+        lateinit var currentConfig: BotConfig
     }
 }

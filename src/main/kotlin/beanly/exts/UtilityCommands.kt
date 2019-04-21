@@ -8,7 +8,7 @@ import beanly.consts.TIME_FORMATTER
 import beanly.gmtToEst
 import beanly.ifEmptyToString
 import beanly.trimToDescription
-import framework.CommandGroup
+import framework.annotations.CommandGroup
 import framework.dsl.command
 import framework.dsl.embed
 import framework.extensions.error

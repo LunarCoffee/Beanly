@@ -7,7 +7,7 @@ import beanly.consts.EMOJI_OPEN_FILE_FOLDER
 import beanly.consts.EMOJI_PING_PONG
 import beanly.exts.utility.SystemStatistics
 import beanly.trimToDescription
-import framework.CommandGroup
+import framework.annotations.CommandGroup
 import framework.dsl.command
 import framework.dsl.embed
 import framework.extensions.await

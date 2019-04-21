@@ -6,7 +6,7 @@ import beanly.consts.EMBED_COLOR
 import beanly.exts.utility.ExecResult
 import beanly.trimToDescription
 import framework.CommandContext
-import framework.CommandGroup
+import framework.annotations.CommandGroup
 import framework.dsl.command
 import framework.dsl.embed
 import framework.extensions.await
@@ -154,7 +154,7 @@ class OwnerCommands {
         deleteSender = true
 
         extDescription = """
-            |`smsg message`
+            |`smsg message`\n
             |Sends a message to the command user's channel. This is an owner only command as to
             |prevent spam.
         """.trimToDescription()
@@ -166,6 +166,37 @@ class OwnerCommands {
         }
     }
 
+    fun semt() = command("semt") {
+        description = "Sends one or more emotes. Only my owner can use this."
+        aliases = listOf("sendemote")
+
+        ownerOnly = true
+        deleteSender = true
+
+        extDescription = """
+            |`semt names...`\n
+            |Sends one or more emotes to the command user's channel. This is an owner only command
+            |for... hm. I'm not too sure why this is an owner only command. I guess you'll have to
+            |stick with the `emotes` command. Anyway, if an emote is not found, I simply don't send
+            |that one (unlike with `emotes`).
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrGreedy(String::toString))
+        execute { ctx, args ->
+            val emoteNames = args.get<List<String>>(0)
+            val emotes = emoteNames
+                .mapNotNull { ctx.jda.getEmotesByName(it, true).firstOrNull()?.asMention }
+                .joinToString(" ")
+
+            if (emotes.isEmpty()) {
+                ctx.error("I don't have any of those emotes!")
+                return@execute
+            }
+
+            ctx.send(emotes)
+        }
+    }
+
     fun sebd() = command("sebd") {
         description = "Sends an embed. Only my owner can use this."
         aliases = listOf("sendembed")
@@ -174,7 +205,7 @@ class OwnerCommands {
         deleteSender = true
 
         extDescription = """
-            |`smsg message`
+            |`smsg message`\n
             |Sends a message embed to the command user's channel. This is an owner only command as
             |to prevent spam. For more advanced usage, it is advised to use the `ex` command.
         """.trimToDescription()

@@ -7,7 +7,7 @@ import beanly.exts.utility.DiceRoll
 import beanly.exts.utility.XkcdComic
 import beanly.exts.utility.toDiceRoll
 import beanly.trimToDescription
-import framework.CommandGroup
+import framework.annotations.CommandGroup
 import framework.dsl.command
 import framework.dsl.embed
 import framework.extensions.await
@@ -238,13 +238,15 @@ class FunCommands {
         }
     }
 
-    fun emote() = command("emote") {
+    fun emote() = command("emotes") {
         description = "Sends emotes from servers I'm in by your choice."
-        aliases = listOf("sendemote")
+        aliases = listOf("sendemotes")
 
         extDescription = """
             |`$name names...`\n
-            |
+            |Sends emotes with the names in [names]. If one or more emotes are not found, no emotes
+            |will be sent, only an error message. The bot must be in the server with the emotes you
+            |you wish to use, and have access to them as well.
         """.trimToDescription()
 
         expectedArgs = listOf(TrGreedy(String::toString))
@@ -326,9 +328,9 @@ class FunCommands {
                     } else {
                         url("https://xkcd.com/info.0.json")
                     }
-                }.body()!!.string().also(::println),
+                }.body()!!.string(),
                 XkcdComic::class.java
-            ).also(::println)
+            )
         }
     }
 }
