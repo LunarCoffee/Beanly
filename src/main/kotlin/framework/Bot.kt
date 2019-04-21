@@ -71,9 +71,4 @@ open class Bot(configPath: String) {
 
         dispatcher.registerCommands()
     }
-
-    companion object {
-        // By way of [Bot.currentConfig], this is only read from, never modified.
-        lateinit var currentConfig: BotConfig
-    }
 }
