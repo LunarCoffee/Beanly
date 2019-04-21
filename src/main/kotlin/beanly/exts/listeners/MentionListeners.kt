@@ -1,4 +1,4 @@
-package beanly.exts
+package beanly.exts.listeners
 
 import beanly.consts.EMOJI_COFFEE
 import framework.Bot
@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 
 @ListenerGroup
-class MentionListener(private val bot: Bot) : ListenerAdapter() {
+class MentionListeners(private val bot: Bot) : ListenerAdapter() {
     override fun onMessageReceived(event: MessageReceivedEvent) {
         val content = event.message.contentRaw
 

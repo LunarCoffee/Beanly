@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package beanly.exts
+package beanly.exts.commands
 
 import beanly.consts.EMOJI_LAPTOP_COMPUTER
 import beanly.consts.EMOJI_OPEN_FILE_FOLDER

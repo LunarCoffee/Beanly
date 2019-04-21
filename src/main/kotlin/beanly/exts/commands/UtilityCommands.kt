@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package beanly.exts
+package beanly.exts.commands
 
 import beanly.consts.EMOJI_MAG_GLASS
 import beanly.consts.EMOJI_PAGE_FACING_UP

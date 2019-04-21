@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package beanly.exts
+package beanly.exts.commands
 
 import beanly.consts.*
 import beanly.exts.utility.DiceRoll

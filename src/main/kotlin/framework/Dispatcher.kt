@@ -3,6 +3,7 @@ package framework
 import framework.extensions.error
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -41,6 +42,7 @@ class Dispatcher(
             GlobalScope.launch {
                 event.channel.error("You need to be the owner to use that command!")
             }
+            log.info { "${event.author.name} tried to use owner-only command $command!" }
             return
         }
 
@@ -62,12 +64,8 @@ class Dispatcher(
             return
         }
 
-        println(commandArgs)
-
         command.dispatch(CommandContext(event, jda, bot), CommandArguments(commandArgs))
-
-        // TODO: Add proper logging with kotlin-logging.
-        println("${event.author.name} used command $command!\n${command.aliases + command.name}")
+        log.info { "${event.author.name} used command $command with args $commandArgs" }
     }
 
     private fun parseArgs(content: String): List<String> {
@@ -111,5 +109,9 @@ class Dispatcher(
         // Remove the command name (like <..rpn>) and any trailing blank strings that interfere
         // with arglist length checking.
         return (args + currentArg).drop(1).dropLastWhile { it.isBlank() }
+    }
+
+    companion object {
+        private val log = KotlinLogging.logger("Dispatcher")
     }
 }
