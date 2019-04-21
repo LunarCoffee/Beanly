@@ -6,9 +6,7 @@ import org.yaml.snakeyaml.Yaml
 import java.io.File
 
 open class Bot(configPath: String) {
-    val config = Yaml()
-        .loadAs(File(configPath).readText(), BotConfig::class.java)!!
-        .also { currentConfig = it }
+    val config = Yaml().loadAs(File(configPath).readText(), BotConfig::class.java)!!
 
     val jda = JDABuilder()
         .setToken(config.token)
@@ -70,10 +68,5 @@ open class Bot(configPath: String) {
             .forEach { dispatcher.addCommand(it) }
 
         dispatcher.registerCommands()
-    }
-
-    companion object {
-        // By way of [Bot.currentConfig], this is only read from, never modified.
-        lateinit var currentConfig: BotConfig
     }
 }
