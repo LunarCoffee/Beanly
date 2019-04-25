@@ -35,7 +35,12 @@ open class Bot(configPath: String) {
             }
         }
         .toMap()
-        .also { log.info { "Loaded command groups: ${it.keys.map { it.name }}" } }
+        .also {
+            log.info {
+                val groupNames = it.keys.map { it.name }
+                "Loaded command groups: $groupNames"
+            }
+        }
 
     val commands = groupToCommands.values.flatten()
 
@@ -59,8 +64,10 @@ open class Bot(configPath: String) {
             }
             .onEach { jda.addEventListener(it) }
 
-        val groupNames = groups.map { it.javaClass.name.substringAfterLast(".") }.toList()
-        log.info { "Loaded listener groups: $groupNames" }
+        log.info {
+            val groupNames = groups.map { it.javaClass.name.substringAfterLast(".") }.toList()
+            "Loaded listener groups: $groupNames"
+        }
     }
 
     fun loadCommands() {
@@ -73,6 +80,6 @@ open class Bot(configPath: String) {
     }
 
     companion object {
-        private val log = KotlinLogging.logger("Bot")
+        private val log = KotlinLogging.logger {}
     }
 }

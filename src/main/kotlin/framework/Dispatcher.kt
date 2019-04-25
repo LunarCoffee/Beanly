@@ -112,6 +112,6 @@ class Dispatcher(
     }
 
     companion object {
-        private val log = KotlinLogging.logger("Dispatcher")
+        private val log = KotlinLogging.logger {}
     }
 }

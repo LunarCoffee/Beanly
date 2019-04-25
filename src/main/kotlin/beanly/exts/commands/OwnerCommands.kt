@@ -12,12 +12,15 @@ import framework.dsl.embed
 import framework.extensions.await
 import framework.extensions.error
 import framework.extensions.send
+import framework.extensions.success
 import framework.transformers.TrGreedy
 import framework.transformers.TrInt
 import framework.transformers.TrRest
 import framework.transformers.TrWord
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import java.io.*
@@ -25,6 +28,7 @@ import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngineManager
 import javax.script.ScriptException
 import javax.script.SimpleBindings
+import kotlin.system.exitProcess
 import kotlin.system.measureNanoTime
 
 @CommandGroup("Owner")
@@ -226,6 +230,24 @@ class OwnerCommands {
         }
     }
 
+    fun shutdown() = command("shutdown") {
+        description = "Shuts down the bot. Only my owner can use this."
+        ownerOnly = true
+
+        extDescription = """
+            |`shutdown`\n
+            |Shuts down the bot process. There is a roughly 5-second long period of time between
+            |command usage and actual process termination. This is owner only for obvious reasons.
+        """.trimToDescription()
+
+        execute { ctx, _ ->
+            ctx.success("Goodbye, world...")
+
+            delay(5000)
+            exitProcess(0)
+        }
+    }
+
     private suspend fun executeKotlin(ctx: CommandContext, codeLines: List<String>): ExecResult {
         val importStatement = """^\s*import\s+([A-z0-9]+\.)*[A-z0-9]+""".toRegex()
         val scriptEngine = ScriptEngineManager()
@@ -276,5 +298,8 @@ class OwnerCommands {
             result,
             time as Long
         )
+
+        val counter = atomic(1)
+        ctx.event.guild.getCategoryById(1).textChannels.forEach { it.sendMessage("${counter.getAndIncrement()} $counter").queue() }
     }
 }
