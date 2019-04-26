@@ -4,7 +4,8 @@ package beanly.exts.commands
 
 import beanly.consts.*
 import beanly.exts.utility.DiceRoll
-import beanly.exts.utility.XkcdComic
+import beanly.exts.utility.getXkcd
+import beanly.exts.utility.iss.IssLocation
 import beanly.exts.utility.toDiceRoll
 import beanly.trimToDescription
 import framework.annotations.CommandGroup
@@ -15,8 +16,7 @@ import framework.extensions.error
 import framework.extensions.send
 import framework.extensions.success
 import framework.transformers.*
-import io.github.rybalkinsd.kohttp.dsl.httpGet
-import io.github.rybalkinsd.kohttp.ext.url
+import java.io.File
 import kotlin.random.Random
 
 @CommandGroup("Fun")
@@ -272,6 +272,9 @@ class FunCommands {
     }
 
     fun xkcd() = command("xkcd") {
+        description = "Gets an xkcd comic!"
+        aliases = listOf("getxkcd")
+
         extDescription = """
             |`xkcd [number|-r]`\n
             |Gets and displays information about the xkcd comic number `number`. If `number` is not
@@ -307,7 +310,7 @@ class FunCommands {
                         """.trimMargin()
 
                         image {
-                            url = this@run.img.also(::println)
+                            url = this@run.img
                         }
                     }
                 }
@@ -315,22 +318,33 @@ class FunCommands {
         }
     }
 
-    private fun getXkcd(which: Int?): XkcdComic {
-        return if (which == 404) {
-            // Accessing the API endpoint for 404 results in, well, a 404. Despite that, the comic
-            // canonically exists as stated by Randall, so this is a special comic just for that.
-            XkcdComic.COMIC_404
-        } else {
-            GSON.fromJson(
-                httpGet {
-                    if (which != null) {
-                        url("https://xkcd.com/$which/info.0.json")
-                    } else {
-                        url("https://xkcd.com/info.0.json")
+    fun iss() = command("iss") {
+        description = "Shows the current location of the ISS."
+        aliases = listOf("issinfo", "spacestation")
+
+        extDescription = """
+            |`iss`\n
+            |Shows details about the location and other info of the International Space Station. A
+            |map with a point where the ISS currently is will also be displayed. The information is
+            |fetched using the `Where the ISS at?` API.
+        """.trimToDescription()
+
+        execute { ctx, _ ->
+            IssLocation().run {
+                ctx.sendMessage(
+                    embed {
+                        statistics.run {
+                            title = "$EMOJI_SATELLITE  Info on the ISS:"
+                            description = """
+                                |**Longitude**: ${longitudeStr()}
+                                |**Latitude**: ${latitudeStr()}
+                                |**Altitude**: $altitude km
+                                |**Velocity**: $velocity km/h
+                            """.trimMargin()
+                        }
                     }
-                }.body()!!.string(),
-                XkcdComic::class.java
-            )
+                ).addFile(File(image)).queue()
+            }
         }
     }
 }

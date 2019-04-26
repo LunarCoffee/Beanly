@@ -4,8 +4,8 @@ package beanly.exts.commands
 
 import beanly.consts.EMBED_COLOR
 import beanly.exts.utility.ExecResult
+import beanly.exts.utility.executeKotlin
 import beanly.trimToDescription
-import framework.CommandContext
 import framework.annotations.CommandGroup
 import framework.dsl.command
 import framework.dsl.embed
@@ -17,17 +17,11 @@ import framework.transformers.TrGreedy
 import framework.transformers.TrInt
 import framework.transformers.TrRest
 import framework.transformers.TrWord
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
-import java.io.*
+import java.io.IOException
 import java.util.concurrent.TimeUnit
-import javax.script.ScriptEngineManager
-import javax.script.ScriptException
-import javax.script.SimpleBindings
 import kotlin.system.exitProcess
 import kotlin.system.measureNanoTime
 
@@ -244,62 +238,8 @@ class OwnerCommands {
             ctx.success("Goodbye, world...")
 
             delay(5000)
+            ctx.jda.shutdownNow()
             exitProcess(0)
         }
-    }
-
-    private suspend fun executeKotlin(ctx: CommandContext, codeLines: List<String>): ExecResult {
-        val importStatement = """^\s*import\s+([A-z0-9]+\.)*[A-z0-9]+""".toRegex()
-        val scriptEngine = ScriptEngineManager()
-            .getEngineByName("kotlin")!!
-            .also { setIdeaIoUseFallback() }
-
-        // Import statements in the code. These will be prepended to the command prelude.
-        val imports = codeLines
-            .filter { it.matches(importStatement) }
-            .joinToString(";")
-
-        // Remove import statements (the command prelude contains a timing mechanism that runs a
-        // lambda, in which you cannot have import statements for some reason).
-        val code = codeLines
-            .filter { !it.matches(importStatement) }
-            .joinToString("\n")
-
-        // Redirect stdout and stderr so we can keep what is outputted.
-        val tempStdout = ByteArrayOutputStream().also { System.setOut(PrintStream(it)) }
-        val tempStderr = ByteArrayOutputStream().also { System.setErr(PrintStream(it)) }
-
-        val (time, result) = try {
-            scriptEngine.eval(
-                // This prepends imports and adds the actual code.
-                File("src/main/resources/ek_prelude.txt").readText().format(imports, code),
-                SimpleBindings().apply { put("ctx", ctx) }
-            ) as Pair<*, *>
-        } catch (e: ScriptException) {
-            ctx.error("Error during execution! Check your PMs for details.")
-            ctx.event.author.openPrivateChannel().await().send(e.toString())
-            return ExecResult.ERROR
-        } catch (e: TimeoutCancellationException) {
-            ctx.error("Execution took too long!")
-            return ExecResult.ERROR
-        } finally {
-            // Reset stdout and stderr.
-            System.setOut(PrintStream(FileOutputStream(FileDescriptor.out)))
-            System.setErr(PrintStream(FileOutputStream(FileDescriptor.err)))
-        }
-
-        val stdout = if (tempStdout.size() > 0) "\n${tempStdout.toString().trim()}" else ""
-        val stderr = if (tempStderr.size() > 0) "\n${tempStderr.toString().trim()}" else ""
-
-        return ExecResult(
-            "JSR223 Kotlin Scripting Engine (1.3.21)",
-            stdout,
-            stderr,
-            result,
-            time as Long
-        )
-
-        val counter = atomic(1)
-        ctx.event.guild.getCategoryById(1).textChannels.forEach { it.sendMessage("${counter.getAndIncrement()} $counter").queue() }
     }
 }

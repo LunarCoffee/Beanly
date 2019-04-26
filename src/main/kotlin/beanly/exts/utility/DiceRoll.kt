@@ -1,7 +1,5 @@
 package beanly.exts.utility
 
-import java.lang.IllegalArgumentException
-
 private val MATCH_REGEX = """(?<times>\d*)d(?<sides>\d+)(?<mod>[+-]\d+)?""".toRegex()
 
 class DiceRoll(val times: Int, val sides: Int, val mod: Int)
