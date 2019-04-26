@@ -75,7 +75,7 @@ class FunCommands {
             |If no specifiers are provided, a single `d6` is used.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrGreedy(String::toDiceRoll, listOf(DiceRoll(1, 6, 0))))
+        expectedArgs = listOf(TrGreedy(String::toDiceRoll, DiceRoll(1, 6, 0)))
         execute { ctx, args ->
             val diceRolls = args.get<List<DiceRoll>>(0)
 
@@ -238,7 +238,7 @@ class FunCommands {
         }
     }
 
-    fun emote() = command("emotes") {
+    fun emotes() = command("emotes") {
         description = "Sends emotes from servers I'm in by your choice."
         aliases = listOf("sendemotes")
 
@@ -249,7 +249,7 @@ class FunCommands {
             |you wish to use, and have access to them as well.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrGreedy(String::toString))
+        expectedArgs = listOf(TrSplit())
         execute { ctx, args ->
             val emoteNames = args.get<List<String>>(0)
             val emotes = emoteNames

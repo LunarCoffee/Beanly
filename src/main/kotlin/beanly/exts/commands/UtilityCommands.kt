@@ -185,7 +185,7 @@ class UtilityCommands {
             }
 
             try {
-                ctx.success("The result of the calculation is ${stack.pop()}!")
+                ctx.success("The result of the calculation is `${stack.pop()}`!")
             } catch (e: EmptyStackException) {
                 ctx.error("Something was wrong with your expression!")
             }
@@ -239,7 +239,7 @@ class UtilityCommands {
                             |**Description**: ${command.description}
                         """.trimMargin()
 
-                        if ("v" in flags) {
+                        if (flags == "-v") {
                             description += "\n**Extended description**: ${command.extDescription}"
                         } else {
                             description += "\n**Usage**: $usage"

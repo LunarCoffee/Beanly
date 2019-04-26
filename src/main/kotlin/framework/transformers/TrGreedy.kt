@@ -4,11 +4,12 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
 class TrGreedy<T>(
     val conversionFunction: (String) -> T,
-    override val default: List<T> = emptyList()
+    vararg defaults: T
 ) : Transformer<List<T>> {
 
     // Greedy is always technically optional, since it can steal at least 0 args.
     override val optional = true
+    override val default = defaults.toList()
 
     override fun transform(event: MessageReceivedEvent, args: MutableList<String>): List<T> {
         if (args.isEmpty()) {

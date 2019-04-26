@@ -1,6 +1,6 @@
 package beanly.exts.utility
 
-private val MATCH_REGEX = """(?<times>\d*)d(?<sides>\d+)(?<mod>[+-]\d+)?""".toRegex()
+private val MATCH_REGEX = """(\d*)d(\d+)([+-]\d+)?""".toRegex()
 
 class DiceRoll(val times: Int, val sides: Int, val mod: Int)
 

@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import kotlin.math.min
 
 class Dispatcher(
     private val jda: JDA,
@@ -35,7 +36,7 @@ class Dispatcher(
 
         val command = commands
             .find { name in it.names }
-            ?: return
+            ?: return suggestCommandNames(event, name)
 
         // Owner only command and user ID check.
         if (command.ownerOnly && event.author.id != bot.config.ownerId) {
@@ -58,7 +59,7 @@ class Dispatcher(
         }
 
         // Transform argument types, and return if not all arguments were used, which means extra
-        // arguments, which shouldn't be allowed.
+        // arguments were given, which shouldn't be allowed.
         val commandArgs = command.expectedArgs.map { it.transform(event, rawArgs) }
         if (rawArgs.isNotEmpty()) {
             return
@@ -109,6 +110,41 @@ class Dispatcher(
         // Remove the command name (like <..rpn>) and any trailing blank strings that interfere
         // with arglist length checking.
         return (args + currentArg).drop(1).dropLastWhile { it.isBlank() }
+    }
+
+    private fun suggestCommandNames(event: MessageReceivedEvent, name: String) {
+        // Don't do anything if the user sent only the prefix.
+        if (name.isBlank()) {
+            return
+        }
+
+        commands
+            .flatMap { it.names }
+            .forEach {
+                if (nameDistance(name, it) < 2) {
+                    GlobalScope.launch {
+                        event.channel.error("That's not a command... did you mean `$it`?")
+                    }
+                    return
+                }
+            }
+    }
+
+    private fun nameDistance(first: String, second: String): Int {
+        val prev = IntArray(second.length + 1) { it }
+        val cur = IntArray(second.length + 1)
+        var cost: Int
+
+        for (i in 0 until first.length) {
+            cur[0] = i + 1
+            for (j in 0 until second.length) {
+                cost = if (first[i] == second[j]) 0 else 1
+                cur[j + 1] = min(cur[j] + 1, min(prev[j + 1] + 1, prev[j] + cost))
+            }
+            for (j in 0..second.length) prev[j] = cur[j]
+        }
+
+        return cur[second.length]
     }
 
     companion object {

@@ -107,13 +107,13 @@ class MiscCommands {
             val upperBound = args.get<Int>(1) + 1
             val flags = args.get<String>(2)
 
-            val number = if ("s" in flags) {
+            val number = if (flags == "-s") {
                 SecureRandom().nextInt(upperBound - lowerBound) + lowerBound
             } else {
                 Random.nextInt(lowerBound, upperBound)
             }
 
-            ctx.success("Your random number is $number!")
+            ctx.success("Your random number is `$number`!")
         }
     }
 

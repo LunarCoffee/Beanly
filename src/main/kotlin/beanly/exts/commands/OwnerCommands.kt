@@ -13,10 +13,7 @@ import framework.extensions.await
 import framework.extensions.error
 import framework.extensions.send
 import framework.extensions.success
-import framework.transformers.TrGreedy
-import framework.transformers.TrInt
-import framework.transformers.TrRest
-import framework.transformers.TrWord
+import framework.transformers.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -95,7 +92,7 @@ class OwnerCommands {
             |by my owner, for obvious security reasons.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrGreedy(String::toString))
+        expectedArgs = listOf(TrSplit())
         execute { ctx, args ->
             val command = args.get<List<String>>(0).toTypedArray()
             var process: Process? = null
@@ -179,7 +176,7 @@ class OwnerCommands {
             |that one (unlike with `emotes`).
         """.trimToDescription()
 
-        expectedArgs = listOf(TrGreedy(String::toString))
+        expectedArgs = listOf(TrSplit())
         execute { ctx, args ->
             val emoteNames = args.get<List<String>>(0)
             val emotes = emoteNames

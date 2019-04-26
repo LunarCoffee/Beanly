@@ -12,7 +12,7 @@ import javax.imageio.ImageIO
 private val mapboxAccessToken = File("src/main/resources/mapbox/mapbox_token.txt").readText()
 
 class IssLocation {
-    val image = "src/main/resources/mapbox/issMap.png"
+    val image = "src/main/resources/mapbox/iss_map.png"
     val statistics = GSON.fromJson(
         httpGet {
             url("https://api.wheretheiss.at/v1/satellites/25544")
