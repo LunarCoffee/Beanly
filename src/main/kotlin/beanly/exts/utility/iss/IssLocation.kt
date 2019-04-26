@@ -33,10 +33,10 @@ class IssLocation {
             }
         }.body()!!.bytes()
 
-        drawPoint(File(image).apply { writeBytes(rawImage) })
+        drawMarkerAndLabel(File(image).apply { writeBytes(rawImage) })
     }
 
-    private fun drawPoint(file: File) {
+    private fun drawMarkerAndLabel(file: File) {
         val image = ImageIO.read(file)
         val withDotLayer = BufferedImage(460, 460, BufferedImage.TYPE_INT_ARGB).apply {
             createGraphics().apply {
