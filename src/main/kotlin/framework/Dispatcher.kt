@@ -19,7 +19,11 @@ class Dispatcher(
     private val commands = mutableSetOf<BaseCommand>()
 
     fun addCommand(command: BaseCommand) = commands.add(command)
-    fun registerCommands() = jda.addEventListener(this)
+
+    fun registerCommands() {
+        jda.removeEventListener(this)
+        jda.addEventListener(this)
+    }
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
         // Keep things sane (PMs and group chats aren't allowed because I'm lazy).
@@ -117,7 +121,7 @@ class Dispatcher(
             prevWasQuote = false
         }
 
-        // Remove the command name (like <..rpn>) and any trailing blank strings that interfere
+        // Remove the command name (like <..iss>) and any trailing blank strings that interfere
         // with arglist length checking.
         return (args + currentArg).drop(1).dropLastWhile { it.isBlank() }
     }

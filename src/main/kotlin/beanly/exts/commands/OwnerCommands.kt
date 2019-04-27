@@ -44,14 +44,14 @@ class OwnerCommands {
             val code = args.get<String>(0)
             var language: String
 
+            println(args)
+
             val codeLines = code
-                .substringAfter(" ")
                 .removeSurrounding("```")
                 .also { language = it.substringBefore("\n") }
                 .substringAfter("\n")
                 .split("\n")
 
-            println(language)
             val result = when (language) {
                 "kotlin" -> executeKotlin(ctx, codeLines)
                 else -> {

@@ -157,7 +157,7 @@ class UtilityCommands {
                     return@execute
                 }
 
-                val (op1, op2) = try {
+                val (op2, op1) = try {
                     Pair(stack.pop(), stack.pop())
                 } catch (e: EmptyStackException) {
                     ctx.error("Something was wrong with your expression!")
@@ -225,6 +225,7 @@ class UtilityCommands {
                     .plusMinutes(minutes)
                     .plusSeconds(seconds)
                     .format(TIME_FORMATTER)
+                    .replace(" at ", "` at `")
                     .drop(4)
 
                 // Maybe using UTC would be a good idea.
@@ -266,11 +267,15 @@ class UtilityCommands {
                     if (commandName.isBlank()) {
                         title = "$EMOJI_PAGE_FACING_UP  All commands:"
 
-                        for ((group, commands) in ctx.bot.groupToCommands) {
+                        for (c in ctx.bot.commands.distinctBy { it.groupName }) {
                             // Hide owner-only commands unless the command user is the owner.
-                            if (group.name != "Owner" || ctx.isOwner()) {
-                                val names = commands.map { it.name }
-                                description += "**${group.name}**: $names\n"
+                            if (c.groupName != "Owner" || ctx.isOwner()) {
+                                val names = ctx
+                                    .bot
+                                    .commands
+                                    .filter { it.groupName == c.groupName}
+                                    .map { it.name }
+                                description += "**${c.groupName}**: $names\n"
                             }
                         }
 

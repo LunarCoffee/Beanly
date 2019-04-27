@@ -23,7 +23,7 @@ class IssLocation {
     }
 
     private fun saveImage() {
-        val args = "${statistics.longitude},${statistics.latitude},3/500x500"
+        val args = "${statistics.longitude},${statistics.latitude},3/800x800"
         val rawImage = httpGet {
             url("https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/$args")
             param {
@@ -31,23 +31,25 @@ class IssLocation {
             }
         }.body()!!.bytes()
 
+        // If the command is used too fast, the image might be corrupted. Not sure, should probably
+        // investigate further.
         drawMarkerAndLabel(File(image).apply { writeBytes(rawImage) })
     }
 
     private fun drawMarkerAndLabel(file: File) {
         val image = ImageIO.read(file)
-        val withDotLayer = BufferedImage(460, 460, BufferedImage.TYPE_INT_ARGB).apply {
+        val withDotLayer = BufferedImage(760, 760, BufferedImage.TYPE_INT_ARGB).apply {
             createGraphics().apply {
                 drawImage(image, -20, -20, null)
                 paint = Color.RED
 
                 // Draw ISS location marker.
-                font = Font(Font.SANS_SERIF, Font.BOLD, 30)
-                drawString("×", width / 2 - 10, height / 2 + 10)
+                font = Font(Font.SANS_SERIF, Font.BOLD, 60)
+                drawString("×", width / 2 - 20, height / 2 + 20)
 
                 // Draw ISS label.
-                font = Font(Font.SANS_SERIF, Font.PLAIN, 24)
-                drawString("ISS", width / 2 - 17, height / 2 + 39)
+                font = Font(Font.SANS_SERIF, Font.PLAIN, 42)
+                drawString("ISS", width / 2 - 28, height / 2 + 64)
 
                 dispose()
             }
