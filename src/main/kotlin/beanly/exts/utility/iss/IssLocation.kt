@@ -9,8 +9,6 @@ import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 
-private val mapboxAccessToken = File("src/main/resources/mapbox/mapbox_token.txt").readText()
-
 class IssLocation {
     val image = "src/main/resources/mapbox/iss_map.png"
     val statistics = GSON.fromJson(
@@ -29,7 +27,7 @@ class IssLocation {
         val rawImage = httpGet {
             url("https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/$args")
             param {
-                "access_token" to mapboxAccessToken
+                "access_token" to mapboxToken
             }
         }.body()!!.bytes()
 
@@ -55,5 +53,9 @@ class IssLocation {
             }
         }
         ImageIO.write(withDotLayer, "png", file)
+    }
+
+    companion object {
+        private val mapboxToken = File("src/main/resources/mapbox/mapbox_token.txt").readText()
     }
 }

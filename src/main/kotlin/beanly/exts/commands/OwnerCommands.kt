@@ -149,7 +149,7 @@ class OwnerCommands {
         deleteSender = true
 
         extDescription = """
-            |`smsg message`\n
+            |`$name message`\n
             |Sends a message to the command user's channel. This is an owner only command as to
             |prevent spam.
         """.trimToDescription()
@@ -169,7 +169,7 @@ class OwnerCommands {
         deleteSender = true
 
         extDescription = """
-            |`semt names...`\n
+            |`$name names...`\n
             |Sends one or more emotes to the command user's channel. This is an owner only command
             |for... hm. I'm not too sure why this is an owner only command. I guess you'll have to
             |stick with the `emotes` command. Anyway, if an emote is not found, I simply don't send
@@ -200,7 +200,7 @@ class OwnerCommands {
         deleteSender = true
 
         extDescription = """
-            |`smsg message`\n
+            |`$name message`\n
             |Sends a message embed to the command user's channel. This is an owner only command as
             |to prevent spam. For more advanced usage, it is advised to use the `ex` command.
         """.trimToDescription()
@@ -226,7 +226,7 @@ class OwnerCommands {
         ownerOnly = true
 
         extDescription = """
-            |`shutdown`\n
+            |`$name`\n
             |Shuts down the bot process. There is a roughly 5-second long period of time between
             |command usage and actual process termination. This is owner only for obvious reasons.
         """.trimToDescription()

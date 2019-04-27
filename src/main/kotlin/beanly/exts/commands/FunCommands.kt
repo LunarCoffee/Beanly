@@ -276,7 +276,7 @@ class FunCommands {
         aliases = listOf("getxkcd")
 
         extDescription = """
-            |`xkcd [number|-r]`\n
+            |`$name [number|-r]`\n
             |Gets and displays information about the xkcd comic number `number`. If `number` is not
             |specified, the latest comic is used. If the `-r` flag is set, a random comic will be
             |used. Of course, this command also displays the comic itself, not just information.
@@ -323,7 +323,7 @@ class FunCommands {
         aliases = listOf("issinfo", "spacestation")
 
         extDescription = """
-            |`iss`\n
+            |`$name`\n
             |Shows details about the location and other info of the International Space Station. A
             |map with a point where the ISS currently is will also be displayed. The information is
             |fetched using the `Where the ISS at?` API.

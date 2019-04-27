@@ -14,12 +14,15 @@ import framework.dsl.embed
 import framework.extensions.error
 import framework.extensions.send
 import framework.extensions.success
-import framework.transformers.TrSplit
-import framework.transformers.TrUser
-import framework.transformers.TrWord
+import framework.transformers.*
+import framework.transformers.utility.SplitTime
 import framework.transformers.utility.UserNotFound
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.entities.User
+import java.time.LocalDateTime
 import java.util.*
+import kotlin.concurrent.schedule
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -188,6 +191,52 @@ class UtilityCommands {
                 ctx.success("The result of the calculation is `${stack.pop()}`!")
             } catch (e: EmptyStackException) {
                 ctx.error("Something was wrong with your expression!")
+            }
+        }
+    }
+
+    fun remind() = command("remind") {
+        description = "Sets a reminder so you don't have to remember things!"
+        aliases = listOf("reminder")
+
+        extDescription = """
+            |`$name time [reason]`\n
+            |This command takes a time string that looks something like `3h 40m` or `1m 30s` or
+            |`2d 4h 32m 58s`, and optionally, a reason to remind you of. After the amount of time
+            |specified in `time`, I will ping you in the channel you send the command in and remind
+            |you of what you told me to.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrTime(), TrRest(true, "(no reason)"))
+        execute { ctx, args ->
+            val splitTime = args.get<SplitTime>(0)
+            val reason = args.get<String>(1)
+
+            splitTime.run {
+                val dayMs = days * 86_400_000
+                val hourMs = hours * 3_600_000
+                val minuteMs = minutes * 60_000
+                val secondMs = seconds * 1_000
+
+                val dateTime = LocalDateTime
+                    .now()
+                    .plusDays(days)
+                    .plusHours(hours)
+                    .plusMinutes(minutes)
+                    .plusSeconds(seconds)
+                    .format(TIME_FORMATTER)
+                    .drop(4)
+
+                // Maybe using UTC would be a good idea.
+                ctx.success("I'll remind you on `$dateTime`!")
+
+                Timer().schedule(dayMs + hourMs + minuteMs + secondMs) {
+                    GlobalScope.launch {
+                        ctx.success(
+                            "Hey, ${ctx.event.author.asMention}! Here's your reminder: `$reason`"
+                        )
+                    }
+                }
             }
         }
     }

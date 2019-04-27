@@ -13,7 +13,6 @@ class TrUser(
         if (optional && args.isEmpty()) {
             return default
         }
-
         val input = args.removeAt(0)
 
         return when {

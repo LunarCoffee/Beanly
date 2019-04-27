@@ -43,6 +43,7 @@ open class Bot(configPath: String) {
         }
 
     val commands = groupToCommands.values.flatten()
+    val commandNames = commands.flatMap { it.names }
 
     init {
         // Register all classes marked with the [ListenerGroup] annotation as event listeners.

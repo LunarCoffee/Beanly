@@ -58,9 +58,19 @@ class Dispatcher(
             parseArgs(content).toMutableList()
         }
 
-        // Transform argument types, and return if not all arguments were used, which means extra
-        // arguments were given, which shouldn't be allowed.
-        val commandArgs = command.expectedArgs.map { it.transform(event, rawArgs) }
+        // Transform arguments into their types, using exceptions to determine when a non-optional
+        // transformation failed.
+        val commandArgs = command.expectedArgs.map {
+            try {
+                it.transform(event, rawArgs)
+            } catch (e: Exception) {
+                log.info { "${event.author.name} used command $command with incorrect args." }
+                return
+            }
+        }
+
+        // Return if not all arguments were used, which means extra arguments were given, which
+        // shouldn't be allowed.
         if (rawArgs.isNotEmpty()) {
             return
         }
@@ -118,16 +128,14 @@ class Dispatcher(
             return
         }
 
-        commands
-            .flatMap { it.names }
-            .forEach {
-                if (nameDistance(name, it) < 2) {
-                    GlobalScope.launch {
-                        event.channel.error("That's not a command... did you mean `$it`?")
-                    }
-                    return
+        for (alias in bot.commandNames) {
+            if (nameDistance(name, alias) < 2) {
+                GlobalScope.launch {
+                    event.channel.error("That's not a command... did you mean `$alias`?")
                 }
+                return
             }
+        }
     }
 
     private fun nameDistance(first: String, second: String): Int {
