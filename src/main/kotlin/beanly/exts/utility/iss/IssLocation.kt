@@ -3,6 +3,7 @@ package beanly.exts.utility.iss
 import beanly.consts.GSON
 import io.github.rybalkinsd.kohttp.dsl.async.asyncHttpGet
 import io.github.rybalkinsd.kohttp.ext.url
+import sun.awt.SunHints
 import java.awt.Color
 import java.awt.Font
 import java.awt.image.BufferedImage
@@ -40,6 +41,10 @@ class IssLocation {
         val image = ImageIO.read(file)
         val withDotLayer = BufferedImage(760, 760, BufferedImage.TYPE_INT_ARGB).apply {
             createGraphics().apply {
+                // Make the text look nice.
+                setRenderingHint(SunHints.KEY_ANTIALIASING, SunHints.VALUE_ANTIALIAS_ON)
+                setRenderingHint(SunHints.KEY_STROKE_CONTROL, SunHints.VALUE_STROKE_PURE)
+
                 drawImage(image, -20, -20, null)
                 paint = Color.RED
 
@@ -49,7 +54,7 @@ class IssLocation {
 
                 // Draw ISS label.
                 font = Font(Font.SANS_SERIF, Font.PLAIN, 42)
-                drawString("ISS", width / 2 - 28, height / 2 + 64)
+                drawString("ISS", width / 2 - 28, height / 2 + 68)
 
                 dispose()
             }
