@@ -177,7 +177,7 @@ class FunCommands {
         aliases = listOf("magiceightball")
 
         extDescription = """
-            |`$name question`
+            |`$name question`\n
             |Ask the Magic 8 Ball a question and it will undoubtedly tell you the truth (unless
             |it's tired and wants to sleep and not answer your question, in which case you should
             |simply ask again, politely).
@@ -330,7 +330,12 @@ class FunCommands {
         """.trimToDescription()
 
         execute { ctx, _ ->
-            IssLocation().run {
+            val location = IssLocation().apply {
+                getStatistics()
+                saveImage()
+            }
+
+            location.run {
                 ctx.sendMessage(
                     embed {
                         statistics.run {

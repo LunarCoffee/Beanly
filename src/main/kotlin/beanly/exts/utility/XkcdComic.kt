@@ -1,7 +1,7 @@
 package beanly.exts.utility
 
 import beanly.consts.GSON
-import io.github.rybalkinsd.kohttp.dsl.httpGet
+import io.github.rybalkinsd.kohttp.dsl.async.asyncHttpGet
 import io.github.rybalkinsd.kohttp.ext.url
 
 class XkcdComic(
@@ -28,20 +28,20 @@ class XkcdComic(
     }
 }
 
-fun getXkcd(which: Int?): XkcdComic {
+suspend fun getXkcd(which: Int?): XkcdComic {
     return if (which == 404) {
         // Accessing the API endpoint for 404 results in, well, a 404. Despite that, the comic
         // canonically exists as stated by Randall, so this is a special comic just for that.
         XkcdComic.COMIC_404
     } else {
         GSON.fromJson(
-            httpGet {
+            asyncHttpGet {
                 if (which != null) {
                     url("https://xkcd.com/$which/info.0.json")
                 } else {
                     url("https://xkcd.com/info.0.json")
                 }
-            }.body()!!.string(),
+            }.await().body()!!.charStream().readText(),
             XkcdComic::class.java
         )
     }

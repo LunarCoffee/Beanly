@@ -1,7 +1,7 @@
 package beanly.exts.utility.iss
 
 import beanly.consts.GSON
-import io.github.rybalkinsd.kohttp.dsl.httpGet
+import io.github.rybalkinsd.kohttp.dsl.async.asyncHttpGet
 import io.github.rybalkinsd.kohttp.ext.url
 import java.awt.Color
 import java.awt.Font
@@ -11,29 +11,29 @@ import javax.imageio.ImageIO
 
 class IssLocation {
     val image = "src/main/resources/mapbox/iss_map.png"
-    val statistics = GSON.fromJson(
-        httpGet {
-            url("https://api.wheretheiss.at/v1/satellites/25544")
-        }.body()!!.string(),
-        IssStatistics::class.java
-    )!!
+    lateinit var statistics: IssStatistics
 
-    init {
-        saveImage()
+    suspend fun getStatistics() {
+        statistics = GSON.fromJson(
+            asyncHttpGet {
+                url("https://api.wheretheiss.at/v1/satellites/25544")
+            }.await().body()!!.charStream().readText(),
+            IssStatistics::class.java
+        )!!
     }
 
-    private fun saveImage() {
+    suspend fun saveImage() {
         val args = "${statistics.longitude},${statistics.latitude},3/800x800"
-        val rawImage = httpGet {
+        val rawImage = asyncHttpGet {
             url("https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/$args")
             param {
                 "access_token" to mapboxToken
             }
-        }.body()!!.bytes()
+        }.await().body()!!.byteStream()
 
         // If the command is used too fast, the image might be corrupted. Not sure, should probably
         // investigate further.
-        drawMarkerAndLabel(File(image).apply { writeBytes(rawImage) })
+        drawMarkerAndLabel(File(image).apply { writeBytes(rawImage.readBytes()) })
     }
 
     private fun drawMarkerAndLabel(file: File) {

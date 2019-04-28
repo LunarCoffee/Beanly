@@ -15,6 +15,7 @@ import framework.extensions.send
 import framework.extensions.success
 import framework.transformers.TrInt
 import framework.transformers.TrWord
+import io.github.rybalkinsd.kohttp.dsl.httpGet
 import java.io.File
 import java.security.SecureRandom
 import kotlin.random.Random
