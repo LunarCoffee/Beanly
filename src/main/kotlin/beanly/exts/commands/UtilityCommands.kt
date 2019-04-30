@@ -8,15 +8,15 @@ import beanly.consts.TIME_FORMATTER
 import beanly.gmtToEst
 import beanly.ifEmptyToString
 import beanly.trimToDescription
-import framework.annotations.CommandGroup
-import framework.dsl.command
-import framework.dsl.embed
-import framework.extensions.error
-import framework.extensions.send
-import framework.extensions.success
-import framework.transformers.*
-import framework.transformers.utility.SplitTime
-import framework.transformers.utility.UserNotFound
+import framework.core.annotations.CommandGroup
+import framework.api.dsl.command
+import framework.api.dsl.embed
+import framework.api.extensions.error
+import framework.api.extensions.send
+import framework.api.extensions.success
+import framework.core.transformers.*
+import framework.core.transformers.utility.SplitTime
+import framework.core.transformers.utility.UserNotFound
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.entities.User
@@ -273,7 +273,7 @@ class UtilityCommands {
                                 val names = ctx
                                     .bot
                                     .commands
-                                    .filter { it.groupName == c.groupName}
+                                    .filter { it.groupName == c.groupName }
                                     .map { it.name }
                                 description += "**${c.groupName}**: $names\n"
                             }

@@ -6,14 +6,15 @@ import beanly.consts.EMBED_COLOR
 import beanly.exts.utility.ExecResult
 import beanly.exts.utility.executeKotlin
 import beanly.trimToDescription
-import framework.annotations.CommandGroup
-import framework.dsl.command
-import framework.dsl.embed
-import framework.extensions.await
-import framework.extensions.error
-import framework.extensions.send
-import framework.extensions.success
-import framework.transformers.*
+import framework.core.annotations.CommandGroup
+import framework.api.dsl.command
+import framework.api.dsl.embed
+import framework.api.dsl.messagePaginator
+import framework.api.extensions.await
+import framework.api.extensions.error
+import framework.api.extensions.send
+import framework.api.extensions.success
+import framework.core.transformers.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -44,8 +45,6 @@ class OwnerCommands {
             val code = args.get<String>(0)
             var language: String
 
-            println(args)
-
             val codeLines = code
                 .removeSurrounding("```")
                 .also { language = it.substringBefore("\n") }
@@ -66,18 +65,22 @@ class OwnerCommands {
                 return@execute
             }
 
-            result.run {
-                """
-                |--- $header ---
-                |- stderr:$stderr
-                |- stdout:$stdout
-                |+ Returned `${this.result}` in ~${time}ms."""
-                    .trimMargin()
-                    .replace(ctx.bot.config.token, "[REDACTED]")
-                    .lines()
-                    .chunked(20)
-                    .forEach { ctx.send("```diff\n${it.joinToString("\n")}```") }
-            }
+            ctx.send(
+                messagePaginator(ctx.event.author) {
+                    result.run {
+                        """
+                        |--- $header ---
+                        |- stderr:$stderr
+                        |- stdout:$stdout
+                        |+ Returned `${this.result}` in ~${time}ms."""
+                            .trimMargin()
+                            .replace(ctx.bot.config.token, "[REDACTED]")
+                            .lines()
+                            .chunked(16)
+                            .forEach { page("```diff\n${it.joinToString("\n")}```") }
+                    }
+                }
+            )
         }
     }
 
@@ -129,15 +132,19 @@ class OwnerCommands {
                 ""
             }
 
-            """
-            |--- $nameOfExecutor ---
-            |- stdout/stderr:$stdoutStderr
-            |+ Returned `${process!!.exitValue()}` in ~${time}ms."""
-                .trimMargin()
-                .replace(ctx.bot.config.token, "[REDACTED]")
-                .lines()
-                .chunked(20)
-                .forEach { ctx.send("```diff\n${it.joinToString("\n")}```") }
+            ctx.send(
+                messagePaginator(ctx.event.author) {
+                    """
+                    |--- $nameOfExecutor ---
+                    |- stdout/stderr:$stdoutStderr
+                    |+ Returned `${process!!.exitValue()}` in ~${time}ms."""
+                        .trimMargin()
+                        .replace(ctx.bot.config.token, "[REDACTED]")
+                        .lines()
+                        .chunked(20)
+                        .forEach { page("```diff\n${it.joinToString("\n")}```") }
+                }
+            )
         }
     }
 

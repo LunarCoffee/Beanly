@@ -8,14 +8,14 @@ import beanly.exts.utility.getXkcd
 import beanly.exts.utility.iss.IssLocation
 import beanly.exts.utility.toDiceRoll
 import beanly.trimToDescription
-import framework.annotations.CommandGroup
-import framework.dsl.command
-import framework.dsl.embed
-import framework.extensions.await
-import framework.extensions.error
-import framework.extensions.send
-import framework.extensions.success
-import framework.transformers.*
+import framework.core.annotations.CommandGroup
+import framework.api.dsl.command
+import framework.api.dsl.embed
+import framework.api.extensions.await
+import framework.api.extensions.error
+import framework.api.extensions.send
+import framework.api.extensions.success
+import framework.core.transformers.*
 import java.io.File
 import kotlin.random.Random
 

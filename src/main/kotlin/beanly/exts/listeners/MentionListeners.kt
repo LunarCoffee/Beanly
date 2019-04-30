@@ -1,9 +1,9 @@
 package beanly.exts.listeners
 
 import beanly.consts.EMOJI_COFFEE
-import framework.Bot
-import framework.annotations.ListenerGroup
-import framework.extensions.success
+import framework.core.Bot
+import framework.core.annotations.ListenerGroup
+import framework.api.extensions.success
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent

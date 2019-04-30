@@ -1,9 +1,9 @@
 package beanly.exts.utility
 
-import framework.CommandContext
-import framework.extensions.await
-import framework.extensions.error
-import framework.extensions.send
+import framework.core.CommandContext
+import framework.api.extensions.await
+import framework.api.extensions.error
+import framework.api.extensions.send
 import kotlinx.coroutines.TimeoutCancellationException
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import java.io.*

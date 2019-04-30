@@ -1,7 +1,7 @@
-import framework.extensions.*
+import framework.api.extensions.*
 import kotlinx.coroutines.*
 %s
-val ctx=bindings["ctx"] as framework.CommandContext
+val ctx=bindings["ctx"] as framework.core.CommandContext
 var _____________________r:Any?=Any()
 val _____________________TIME=kotlin.system.measureTimeMillis{_____________________r={%s}()}
 Pair(_____________________TIME,_____________________r)

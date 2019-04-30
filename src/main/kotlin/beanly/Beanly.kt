@@ -1,6 +1,6 @@
 package beanly
 
-import framework.dsl.startBot
+import framework.api.dsl.startBot
 import net.dv8tion.jda.api.entities.Activity
 
 fun main() {
