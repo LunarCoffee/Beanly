@@ -1,6 +1,6 @@
 package framework.api.extensions
 
-import framework.api.paginators.Paginator
+import framework.core.paginators.Paginator
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.MessageEmbed

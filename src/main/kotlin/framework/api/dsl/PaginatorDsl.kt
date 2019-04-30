@@ -1,7 +1,7 @@
 package framework.api.dsl
 
-import framework.api.paginators.EmbedPaginator
-import framework.api.paginators.MessagePaginator
+import framework.core.paginators.EmbedPaginator
+import framework.core.paginators.MessagePaginator
 import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.User

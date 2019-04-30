@@ -1,4 +1,4 @@
-package framework.api.paginators
+package framework.core.paginators
 
 enum class PaginatorButtons(val cp: String) {
     FIRST("\u23EE"),

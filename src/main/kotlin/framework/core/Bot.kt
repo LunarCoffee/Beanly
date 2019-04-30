@@ -2,7 +2,7 @@
 
 package framework.core
 
-import framework.api.paginators.PaginationReactionListener
+import framework.core.paginators.PaginationReactionListener
 import framework.core.annotations.CommandGroup
 import framework.core.annotations.ListenerGroup
 import mu.KotlinLogging

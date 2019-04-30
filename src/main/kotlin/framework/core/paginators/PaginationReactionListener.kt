@@ -1,4 +1,4 @@
-package framework.api.paginators
+package framework.core.paginators
 
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
