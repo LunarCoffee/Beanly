@@ -43,7 +43,8 @@ class PayRespectsListeners(private val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
-        if (event.user.isBot || event.reactionEmote.emoji != Emoji.INDICATOR_F.toString()) {
+        val emote = event.reactionEmote
+        if (event.user.isBot || emote.isEmoji && emote.emoji != Emoji.INDICATOR_F.toString()) {
             return
         }
 

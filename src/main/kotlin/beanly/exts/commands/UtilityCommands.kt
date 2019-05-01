@@ -34,7 +34,7 @@ class UtilityCommands {
         aliases = listOf("userinfo")
 
         extDescription = """
-            |`$name [name with tag|id]`\n
+            |`$name [user]`\n
             |Gets basic information about a user. If a name or ID is specified, this command will
             |attempt to fetch a user with them. If not, the author of the message will be used. If
             |the user is in the current server, the `mi` command may provide more detailed info.
@@ -75,7 +75,7 @@ class UtilityCommands {
         aliases = listOf("memberinfo")
 
         extDescription = """
-            |`$name [name with tag|name|id]`\n
+            |`$name [user]`\n
             |Gets detailed information about a member of the current server. If a name or ID is
             |specified, this command will attempt to fetch a user with them. If not, the author of
             |the message will be used. If the user is not in the current server, the `ui` command

@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 
-suspend fun MessageChannel.send(msg: String, after: (Message) -> Unit = {}) {
+suspend fun MessageChannel.send(msg: String, after: suspend (Message) -> Unit = {}) {
     try {
         after(sendMessage(msg).await())
     } catch (e: ErrorResponseException) {
@@ -14,7 +14,7 @@ suspend fun MessageChannel.send(msg: String, after: (Message) -> Unit = {}) {
     }
 }
 
-suspend fun MessageChannel.send(embed: MessageEmbed, after: (Message) -> Unit = {}) {
+suspend fun MessageChannel.send(embed: MessageEmbed, after: suspend (Message) -> Unit = {}) {
     try {
         after(sendMessage(embed).await())
     } catch (e: ErrorResponseException) {
@@ -24,5 +24,10 @@ suspend fun MessageChannel.send(embed: MessageEmbed, after: (Message) -> Unit = 
 
 suspend fun MessageChannel.send(paginator: Paginator) = paginator.send(this)
 
-suspend fun MessageChannel.success(msg: String) = send(":white_check_mark:  $msg  **\\o/**")
-suspend fun MessageChannel.error(msg: String) = send(":negative_squared_cross_mark:  $msg  **>~<**")
+suspend fun MessageChannel.success(msg: String, after: suspend (Message) -> Unit = {}) {
+    send(":white_check_mark:  $msg  **\\o/**", after)
+}
+
+suspend fun MessageChannel.error(msg: String, after: suspend (Message) -> Unit = {}) {
+    send(":negative_squared_cross_mark:  $msg  **>~<**", after)
+}

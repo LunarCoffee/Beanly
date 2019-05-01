@@ -2,6 +2,7 @@ package framework.core
 
 import framework.api.extensions.error
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
@@ -135,7 +136,10 @@ class Dispatcher(
         for (alias in bot.commandNames) {
             if (nameDistance(name, alias) < 2) {
                 GlobalScope.launch {
-                    event.channel.error("That's not a command... did you mean `$alias`?")
+                    event.channel.error("That's not a command... did you mean `$alias`?") {
+                        delay(5000L)
+                        it.delete().queue()
+                    }
                 }
                 return
             }
@@ -153,7 +157,7 @@ class Dispatcher(
                 cost = if (first[i] == second[j]) 0 else 1
                 cur[j + 1] = min(cur[j] + 1, min(prev[j + 1] + 1, prev[j] + cost))
             }
-            for (j in 0..second.length) prev[j] = cur[j]
+            cur.copyInto(prev)
         }
 
         return cur[second.length]
