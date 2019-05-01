@@ -1,0 +1,247 @@
+package beanly.exts.commands
+
+import beanly.consts.Emoji
+import beanly.trimToDescription
+import framework.api.dsl.command
+import framework.api.dsl.embed
+import framework.api.extensions.await
+import framework.api.extensions.error
+import framework.api.extensions.send
+import framework.api.extensions.success
+import framework.core.annotations.CommandGroup
+import framework.core.transformers.TrInt
+import framework.core.transformers.TrRest
+import framework.core.transformers.TrTime
+import framework.core.transformers.TrUser
+import framework.core.transformers.utility.SplitTime
+import framework.core.transformers.utility.UserNotFound
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.exceptions.PermissionException
+import java.util.*
+import kotlin.concurrent.schedule
+
+@CommandGroup("Moderation")
+class ModerationCommands {
+    fun mute() = command("mute") {
+        expectedArgs = listOf(TrUser(), TrTime(), TrRest(true, "(no reason)"))
+        execute { ctx, args ->
+            val user = args.get<User>(0)
+            val time = args.get<SplitTime>(1)
+            val reason = args.get<String>(2)
+            val guild = ctx.guild
+
+            // This uses the permission to manage messages as an allowance to mute.
+            val guildAuthor = guild.getMember(ctx.event.author) ?: return@execute
+            if (!guildAuthor.hasPermission(Permission.MESSAGE_MANAGE)) {
+                ctx.error("You need to be able to manage messages to mute users!")
+                return@execute
+            }
+
+            val offender = guild.getMember(user)
+            if (user is UserNotFound || offender == null) {
+                ctx.error("I can't find that user!")
+                return@execute
+            }
+
+            // TODO: Add makeMutedRole method in utility package and make this shit work
+
+            for (channel in guild.textChannels) {
+                try {
+                    channel.createPermissionOverride(offender).setDeny(
+                        Permission.MESSAGE_WRITE,
+                        Permission.MESSAGE_ADD_REACTION
+                    )
+                } catch (e: PermissionException) {
+                    ctx.error("I don't have enough permissions to do that!")
+                    return@execute
+                }
+
+                // Schedule the unmute time.
+                Timer().schedule(time.totalMs) {
+                    channel.createPermissionOverride(offender).setAllow(
+                        Permission.MESSAGE_WRITE,
+                        Permission.MESSAGE_ADD_REACTION
+                    )
+                }
+            }
+
+            ctx.success("**${offender.user.asTag}** has been muted!")
+            user.openPrivateChannel().await().send(
+                embed {
+                    title = "${Emoji.HAMMER_AND_WRENCH}  You were muted!"
+                    description = """
+                        |**Server name**: ${guild.name}
+                        |**Muter**: ${ctx.event.author.asTag}
+                        |**Time**: $time
+                        |**Reason**: $reason
+                    """.trimMargin()
+                }
+            )
+        }
+    }
+
+    fun kick() = command("kick") {
+        description = "Kicks a member from a server."
+        extDescription = """
+            |`$name user [reason]`\n
+            |Kicks a user from the current server. I must be have the permission to kick members.
+            |When a member is kicked, they will be sent a message with `reason` (or `(no reason)`)
+            |if no reason is specified and the user that kicked them. You must be able to kick
+            |members to use this command.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrUser(), TrRest(true, "(no reason)"))
+        execute { ctx, args ->
+            val user = args.get<User>(0)
+            val reason = args.get<String>(1)
+            val guild = ctx.guild
+
+            // Make sure the author can kick members.
+            val guildAuthor = guild.getMember(ctx.event.author) ?: return@execute
+            if (!guildAuthor.hasPermission(Permission.KICK_MEMBERS)) {
+                ctx.error("You need to be able to kick members!")
+                return@execute
+            }
+
+            val offender = guild.getMember(user)
+            if (user is UserNotFound || offender == null) {
+                ctx.error("I can't find that user!")
+                return@execute
+            }
+
+            if (!guild.selfMember.canInteract(offender)) {
+                ctx.error("I don't have enough permissions to do that!")
+                return@execute
+            }
+
+            try {
+                guild.controller.kick(offender, reason).await()
+                ctx.success("**${offender.user.asTag}** has been kicked!")
+
+                // Send PM to kicked user with information.
+                user.openPrivateChannel().await().send(
+                    embed {
+                        title = "${Emoji.HAMMER_AND_WRENCH}  You were kicked!"
+                        description = """
+                            |**Server name**: ${guild.name}
+                            |**Kicker**: ${ctx.event.author.asTag}
+                            |**Reason**: $reason
+                        """.trimMargin()
+                    }
+                )
+            } catch (e: PermissionException) {
+                ctx.error("I don't have enough permissions to do that!")
+            }
+        }
+    }
+
+    fun ban() = command("ban") {
+        description = "Permanently bans a member from a server."
+        extDescription = """
+            |`$name user [reason]`\n
+            |Bans a user from the current server. I must be have the permission to ban members.
+            |When a member is banned, they will be sent a message with `reason` (or `(no reason)`)
+            |if no reason is specified and the user that banned them. You must be able to ban
+            |members to use this command.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrUser(), TrRest(true, "(no reason)"))
+        execute { ctx, args ->
+            val user = args.get<User>(0)
+            val reason = args.get<String>(1)
+            val guild = ctx.guild
+
+            // Make sure the author can kick members.
+            val guildAuthor = guild.getMember(ctx.event.author) ?: return@execute
+            if (!guildAuthor.hasPermission(Permission.BAN_MEMBERS)) {
+                ctx.error("You need to be able to ban members!")
+                return@execute
+            }
+
+            val offender = guild.getMember(user)
+            if (user is UserNotFound || offender == null) {
+                ctx.error("I can't find that user!")
+                return@execute
+            }
+
+            if (!guild.selfMember.canInteract(offender)) {
+                ctx.error("I don't have enough permissions to do that!")
+                return@execute
+            }
+
+            try {
+                guild.controller.ban(offender, 0, reason).await()
+                ctx.success("**${offender.user.asTag}** has been banned!")
+
+                // Send PM to kicked user with information.
+                user.openPrivateChannel().await().send(
+                    embed {
+                        title = "${Emoji.HAMMER_AND_WRENCH}  You were banned!"
+                        description = """
+                            |**Server name**: ${guild.name}
+                            |**Banner**: ${ctx.event.author.asTag}
+                            |**Reason**: $reason
+                        """.trimMargin()
+                    }
+                )
+            } catch (e: PermissionException) {
+                ctx.error("I don't have enough permissions to do that!")
+            }
+        }
+    }
+
+    fun purge() = command("purge") {
+        description = "Deletes a certain amount of messages from a channel."
+        aliases = listOf("clear", "massdelete")
+
+        extDescription = """
+            |`$name limit [user]`\n
+            |Deletes the past `limit` messages from the current channel, the message containing the
+            |command exempt. If `user` is specified, this command deletes the past `limit` messages
+            |from only that user. You must be able to manage messages to use this command.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrInt(), TrUser(true))
+        execute { ctx, args ->
+            val limit = args.get<Int>(0)
+            val user = args.get<User?>(1)
+
+            // Make sure the author can manage messages.
+            val guildAuthor = ctx.guild.getMember(ctx.event.author) ?: return@execute
+            if (!guildAuthor.hasPermission(Permission.MESSAGE_MANAGE)) {
+                ctx.error("You need to be able to manage messages!")
+                return@execute
+            }
+
+            // Don't get rate limited!
+            if (limit !in 1..100) {
+                ctx.error("I can't purge that amount of messages!")
+                return@execute
+            }
+
+            if (user is UserNotFound) {
+                ctx.error("I can't find that user!")
+                return@execute
+            }
+
+            val channel = ctx.event.channel
+            try {
+                channel.purgeMessages(
+                    if (user != null) {
+                        channel
+                            .iterableHistory
+                            .asSequence()
+                            .filter { it.author == user }
+                            .take(limit + if (user == ctx.event.author) 1 else 0)
+                            .toList()
+                    } else {
+                        channel.iterableHistory.take(limit + 1)
+                    }
+                )
+            } catch (e: PermissionException) {
+                ctx.error("I don't have enough permissions to do that!")
+            }
+        }
+    }
+}

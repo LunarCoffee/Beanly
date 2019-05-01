@@ -17,11 +17,8 @@ import framework.core.transformers.*
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserNotFound
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
-import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
-import java.time.LocalDateTime
 import java.util.*
 import kotlin.concurrent.schedule
 import kotlin.math.pow
@@ -210,86 +207,19 @@ class UtilityCommands {
 
         expectedArgs = listOf(TrTime(), TrRest(true, "(no reason)"))
         execute { ctx, args ->
-            val splitTime = args.get<SplitTime>(0)
+            val time = args.get<SplitTime>(0)
             val reason = args.get<String>(1)
 
-            splitTime.run {
-                val dayMs = days * 86_400_000
-                val hourMs = hours * 3_600_000
-                val minuteMs = minutes * 60_000
-                val secondMs = seconds * 1_000
+            val dateTime = time.asLocal.format(TIME_FORMATTER).replace(" at ", "` at `").drop(4)
+            ctx.success("I'll remind you on `$dateTime`!")
 
-                val dateTime = LocalDateTime
-                    .now()
-                    .plusDays(days)
-                    .plusHours(hours)
-                    .plusMinutes(minutes)
-                    .plusSeconds(seconds)
-                    .format(TIME_FORMATTER)
-                    .replace(" at ", "` at `")
-                    .drop(4)
-
-                // Maybe using UTC would be a good idea.
-                ctx.success("I'll remind you on `$dateTime`!")
-
-                Timer().schedule(dayMs + hourMs + minuteMs + secondMs) {
-                    GlobalScope.launch {
-                        ctx.success(
-                            "Hey, ${ctx.event.author.asMention}! Here's your reminder: `$reason`"
-                        )
-                    }
+            Timer().schedule(time.totalMs) {
+                GlobalScope.launch {
+                    ctx.success(
+                        "Hey, ${ctx.event.author.asMention}! Here's your reminder: `$reason`"
+                    )
                 }
             }
-        }
-    }
-
-    fun purge() = command("purge") {
-        description = "Deletes a certain amount of messages from a channel."
-        aliases = listOf("clear", "massdelete")
-
-        extDescription = """
-            |`$name limit [user]`\n
-            |Deletes the past `limit` messages from the current channel, the message containing the
-            |command exempt. If `user` is specified, this command deletes the past `limit` messages
-            |from only that user. You must be able to manage messages to use this command.
-        """.trimToDescription()
-
-        expectedArgs = listOf(TrInt(), TrUser(true))
-        execute { ctx, args ->
-            val limit = args.get<Int>(0)
-            val user = args.get<User?>(1)
-
-            // Make sure the author can manage messages (to prevent misuse).
-            val guildAuthor = ctx.guild.getMember(ctx.event.author) ?: return@execute
-            if (!guildAuthor.hasPermission(Permission.MESSAGE_MANAGE)) {
-                ctx.error("You need to be able to manage messages!")
-                return@execute
-            }
-
-            // Don't get rate limited!
-            if (limit !in 1..100) {
-                ctx.error("I can't purge that amount of messages!")
-                return@execute
-            }
-
-            if (user is UserNotFound) {
-                ctx.error("I can't find that user!")
-                return@execute
-            }
-
-            val channel = ctx.event.channel
-            channel.purgeMessages(
-                if (user != null) {
-                    channel
-                        .iterableHistory
-                        .asSequence()
-                        .filter { it.author == user }
-                        .take(limit + if (user == ctx.event.author) 1 else 0)
-                        .toList()
-                } else {
-                    channel.iterableHistory.take(limit + 1)
-                }
-            )
         }
     }
 
@@ -297,9 +227,14 @@ class UtilityCommands {
         description = "Lists all commands or shows help for a specific command."
         extDescription = """
             |`$name [command name] [-v]`\n
-            |With a command name, this command gets its aliases, short description, expected
+            |With a command name, this command gets its aliases, expected usage, expected
             |arguments, and optionally (if the `-v` flag is set) an extended description (which
             |you're reading right now). Otherwise, this command simply lists available commands.
+            |The syntax of the expected usage is as follows:\n
+            | - `name`: denotes that `name` is required\n
+            | - `name1|name2`: denotes that either `name1` or `name2` is valid\n
+            | - `name...`: denotes that many of `name` can be specified\n
+            |If an argument is wrapped with square brackets, it is optional.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true), TrWord(true))

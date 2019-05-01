@@ -13,7 +13,8 @@ enum class Emoji(private val cp: String) {
     FRAMED_PICTURE("\uD83D\uDDBC️"),
     COFFEE("\u2615"),
     SATELLITE("\uD83D\uDEF0️"),
-    INDICATOR_F("\uD83C\uDDEB");
+    INDICATOR_F("\uD83C\uDDEB"),
+    HAMMER_AND_WRENCH("\uD83D\uDEE0️");
 
     override fun toString() = cp
 }

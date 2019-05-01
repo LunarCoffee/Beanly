@@ -2,7 +2,6 @@ package framework.core.transformers
 
 import framework.core.transformers.utility.SplitTime
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import java.lang.IllegalArgumentException
 
 class TrTime(
     override val optional: Boolean = false,
@@ -18,10 +17,9 @@ class TrTime(
 
         val units = isTime
             .map { timePart ->
-                TIME_REGEX.matchEntire(timePart)!!
-                    .groupValues[0]
-                    .partition { it in "dhms" }
-                    .run { Pair(first, second.toLong()) }
+                TIME_REGEX.matchEntire(timePart)!!.groupValues[0].partition { it in "dhms" }.run {
+                    Pair(first, second.toLong())
+                }
             }
             .toMap()
 
