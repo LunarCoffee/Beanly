@@ -21,6 +21,13 @@ import kotlin.random.Random
 
 @CommandGroup("Fun")
 class FunCommands {
+    fun `this is a test lmao`() = command("ttt") {
+        expectedArgs = listOf(TrWord(), TrWord(), TrWord())
+        execute { ctx, args ->
+            ctx.send(args.toString())
+        }
+    }
+
     fun flip() = command("flip") {
         description = "Flips coins."
         aliases = listOf("coin", "flipcoin")

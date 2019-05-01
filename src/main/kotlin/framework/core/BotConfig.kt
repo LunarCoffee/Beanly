@@ -10,4 +10,7 @@ class BotConfig {
     lateinit var sourceRootDir: String
     lateinit var commandP: String
     lateinit var listenerP: String
+
+    lateinit var successFormat: String
+    lateinit var errorFormat: String
 }

@@ -86,45 +86,24 @@ class Dispatcher(
 
     private fun parseArgs(content: String): List<String> {
         val args = mutableListOf<String>()
+        var pos = 0
 
-        var currentArg = ""
-        var inQuotes = false
-        var prevWasQuote = false
-
-        for (char in content) {
-            if (char == '"') {
-                // This is when the terminating quote comes in.
-                if (inQuotes) {
-                    args += currentArg
-                    currentArg = ""
-                    prevWasQuote = true
+        while (pos < content.length) {
+            when {
+                content[pos] == ' ' -> pos++
+                content[pos] == '"' -> {
+                    args += content.drop(pos + 1).takeWhile { it != '"' }
+                    pos += args.last().length + 2
                 }
-                inQuotes = !inQuotes
-                continue
+                else -> {
+                    args += content.drop(pos).takeWhile { it != ' ' }
+                    pos += args.last().length
+                }
             }
-
-            // If the character doesn't mean anything special, just add it.
-            if (char != ' ') {
-                currentArg += char
-                continue
-            }
-
-            // If the character is a space and we're in quotes, just add it. If we're not and the
-            // last character was not a quote (which would be a situation like <"arg 1" arg2>),
-            // we're done parsing the current arg, since it's the start of a new arg.
-            if (inQuotes) {
-                currentArg += " "
-            } else if (!prevWasQuote) {
-                args += currentArg
-                currentArg = ""
-            }
-
-            prevWasQuote = false
         }
 
-        // Remove the command name (like <..iss>) and any trailing blank strings that interfere
-        // with arglist length checking.
-        return (args + currentArg).drop(1).dropLastWhile { it.isBlank() }
+        // Drop the first to remove the command name.
+        return args.drop(1)
     }
 
     private fun suggestCommandNames(event: MessageReceivedEvent, name: String) {

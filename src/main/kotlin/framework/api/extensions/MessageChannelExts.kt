@@ -22,7 +22,13 @@ suspend fun MessageChannel.send(embed: MessageEmbed, after: suspend (Message) ->
     }
 }
 
-suspend fun MessageChannel.send(paginator: Paginator) = paginator.send(this)
+suspend fun MessageChannel.send(paginator: Paginator, after: suspend (Paginator) -> Unit = {}) {
+    try {
+        after(paginator.apply { send(this@send) })
+    } catch (e: ErrorResponseException) {
+        error("The message that was supposed to be sent can't fit in an embed!")
+    }
+}
 
 suspend fun MessageChannel.success(msg: String, after: suspend (Message) -> Unit = {}) {
     send(":white_check_mark:  $msg  **\\o/**", after)
