@@ -1,4 +1,4 @@
-package beanly.exts.utility
+package beanly.exts.commands.utility
 
 import beanly.consts.GSON
 import io.github.rybalkinsd.kohttp.dsl.async.asyncHttpGet

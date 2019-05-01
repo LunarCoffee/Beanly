@@ -2,9 +2,9 @@
 
 package framework.core
 
-import framework.core.paginators.PaginationReactionListener
 import framework.core.annotations.CommandGroup
 import framework.core.annotations.ListenerGroup
+import framework.core.paginators.PaginationReactionListener
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -30,7 +30,7 @@ open class Bot(configPath: String) {
     // Reflections (which worked), so I had to do this.
     private val commandGroups = File(config.sourceRootDir)
         .walk()
-        .mapNotNull { silence { cl.loadClass("${config.commandPkg}.${it.nameWithoutExtension}") } }
+        .mapNotNull { silence { cl.loadClass("${config.commandP}.${it.nameWithoutExtension}") } }
         .filter { c -> c.annotations.any { it.annotationClass == CommandGroup::class } }
 
     // Map of [CommandGroup]s to their [BaseCommand]s with messy reflection stuff.
@@ -63,25 +63,15 @@ open class Bot(configPath: String) {
     // signatures to prevent mistakes. And very painful reflection.
     private val listenerGroups = File(config.sourceRootDir)
         .walk()
-        .mapNotNull {
-            silence { cl.loadClass("${config.listenerPkg}.${it.nameWithoutExtension}") }
-        }
+        .mapNotNull { silence { cl.loadClass("${config.listenerP}.${it.nameWithoutExtension}") } }
         .filter { c -> c.annotations.any { it.annotationClass == ListenerGroup::class } }
         .map { c ->
-            c.constructors
-                .find {
-                    // Make sure the constructor takes one argument of type [Bot].
-                    it.parameters.run {
-                        size == 1 && get(0).type.name == Bot::class.java.name
-                    }
-                }!!.newInstance(this) as ListenerAdapter
-        }
-        .onEach { jda.addEventListener(it) }
-        .also {
-            log.info {
-                val groupNames = it.map { it.javaClass.name.substringAfterLast(".") }.toList()
-                "Loaded listener groups: $groupNames"
-            }
+            c.constructors.find {
+                // Make sure the constructor takes one argument of type [Bot].
+                it.parameters.run {
+                    size == 1 && get(0).type.name == Bot::class.java.name
+                }
+            }!!.newInstance(this) as ListenerAdapter
         }
 
     // Mutable to allow for dynamic loading of event listeners.
@@ -92,7 +82,14 @@ open class Bot(configPath: String) {
     init {
         // Register the reaction listener that handles paginator page changing.
         listeners += PaginationReactionListener()
-        jda.addEventListener(listeners.last())
+
+        // Load the listeners (doing it in the assignment with an [onEach] seems to load two of
+        // each for some reason).
+        jda.addEventListener(*listeners.toTypedArray())
+        log.info {
+            val groupNames = listeners.map { it.javaClass.name.substringAfterLast(".") }.toList()
+            "Loaded listener groups: $groupNames"
+        }
     }
 
     // This method adds a command dynamically, and is not meant to be used as a replacement for

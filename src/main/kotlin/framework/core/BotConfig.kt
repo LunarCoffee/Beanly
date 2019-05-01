@@ -8,6 +8,6 @@ class BotConfig {
     lateinit var ownerId: String
 
     lateinit var sourceRootDir: String
-    lateinit var commandPkg: String
-    lateinit var listenerPkg: String
+    lateinit var commandP: String
+    lateinit var listenerP: String
 }

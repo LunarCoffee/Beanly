@@ -2,23 +2,24 @@
 
 package beanly.exts.commands
 
-import beanly.consts.EMOJI_MAG_GLASS
-import beanly.consts.EMOJI_PAGE_FACING_UP
+import beanly.consts.Emoji
 import beanly.consts.TIME_FORMATTER
 import beanly.gmtToEst
 import beanly.ifEmptyToString
 import beanly.trimToDescription
-import framework.core.annotations.CommandGroup
 import framework.api.dsl.command
 import framework.api.dsl.embed
 import framework.api.extensions.error
 import framework.api.extensions.send
 import framework.api.extensions.success
+import framework.core.annotations.CommandGroup
 import framework.core.transformers.*
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserNotFound
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
 import java.time.LocalDateTime
 import java.util.*
@@ -52,7 +53,7 @@ class UtilityCommands {
             ctx.send(
                 embed {
                     user.run {
-                        title = "$EMOJI_MAG_GLASS  Info on $botOrUser **$asTag**:"
+                        title = "${Emoji.MAG_GLASS}  Info on $botOrUser **$asTag**:"
                         description = """
                             |**User ID**: $id
                             |**Creation time**: ${timeCreated.gmtToEst().format(TIME_FORMATTER)}
@@ -107,7 +108,7 @@ class UtilityCommands {
                     }
 
                     embed {
-                        title = "$EMOJI_MAG_GLASS  Info on $botOrMember **${user.asTag}**:"
+                        title = "${Emoji.MAG_GLASS}  Info on $botOrMember **${user.asTag}**:"
                         description = """
                             |**User ID**: $id
                             |**Nickname**: ${nickname ?: "(none)"}
@@ -242,6 +243,56 @@ class UtilityCommands {
         }
     }
 
+    fun purge() = command("purge") {
+        description = "Deletes a certain amount of messages from a channel."
+        aliases = listOf("clear", "massdelete")
+
+        extDescription = """
+            |`$name limit [user]`\n
+            |Deletes the past `limit` messages from the current channel, the message containing the
+            |command exempt. If `user` is specified, this command deletes the past `limit` messages
+            |from only that user. You must be able to manage messages to use this command.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrInt(), TrUser(true))
+        execute { ctx, args ->
+            val limit = args.get<Int>(0)
+            val user = args.get<User?>(1)
+
+            // Make sure the author can manage messages (to prevent misuse).
+            val guildAuthor = ctx.guild.getMember(ctx.event.author) ?: return@execute
+            if (!guildAuthor.hasPermission(Permission.MESSAGE_MANAGE)) {
+                ctx.error("You need to be able to manage messages!")
+                return@execute
+            }
+
+            // Don't get rate limited!
+            if (limit !in 1..100) {
+                ctx.error("I can't purge that amount of messages!")
+                return@execute
+            }
+
+            if (user is UserNotFound) {
+                ctx.error("I can't find that user!")
+                return@execute
+            }
+
+            val channel = ctx.event.channel
+            channel.purgeMessages(
+                if (user != null) {
+                    channel
+                        .iterableHistory
+                        .asSequence()
+                        .filter { it.author == user }
+                        .take(limit + if (user == ctx.event.author) 1 else 0)
+                        .toList()
+                } else {
+                    channel.iterableHistory.take(limit + 1)
+                }
+            )
+        }
+    }
+
     fun help() = command("help") {
         description = "Lists all commands or shows help for a specific command."
         extDescription = """
@@ -265,7 +316,7 @@ class UtilityCommands {
             ctx.send(
                 embed {
                     if (commandName.isBlank()) {
-                        title = "$EMOJI_PAGE_FACING_UP  All commands:"
+                        title = "${Emoji.PAGE_FACING_UP}  All commands:"
 
                         for (c in ctx.bot.commands.distinctBy { it.groupName }) {
                             // Hide owner-only commands unless the command user is the owner.
@@ -287,7 +338,7 @@ class UtilityCommands {
                         // usage (i.e. `help [command name] [-v]`).
                         val usage = command.extDescription.substringBefore("\n")
 
-                        title = "$EMOJI_PAGE_FACING_UP  Info on **${command.name}**:"
+                        title = "${Emoji.PAGE_FACING_UP}  Info on **${command.name}**:"
                         description = """
                             |**Aliases**: ${command.aliases.ifEmptyToString()}
                             |**Description**: ${command.description}

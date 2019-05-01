@@ -3,10 +3,10 @@
 package beanly.exts.commands
 
 import beanly.consts.*
-import beanly.exts.utility.DiceRoll
-import beanly.exts.utility.getXkcd
-import beanly.exts.utility.iss.IssLocation
-import beanly.exts.utility.toDiceRoll
+import beanly.exts.commands.utility.DiceRoll
+import beanly.exts.commands.utility.getXkcd
+import beanly.exts.commands.utility.iss.IssLocation
+import beanly.exts.commands.utility.toDiceRoll
 import beanly.trimToDescription
 import framework.core.annotations.CommandGroup
 import framework.api.dsl.command
@@ -54,7 +54,7 @@ class FunCommands {
 
             ctx.send(
                 embed {
-                    title = "$EMOJI_RADIO_BUTTON  You flipped $result!"
+                    title = "${Emoji.RADIO_BUTTON}  You flipped $result!"
                     description = flips.toString()
                 }
             )
@@ -107,7 +107,7 @@ class FunCommands {
 
             ctx.send(
                 embed {
-                    title = "$EMOJI_GAME_DIE  You rolled a $totalOfOrEmpty$total!"
+                    title = "${Emoji.GAME_DIE}  You rolled a $totalOfOrEmpty$total!"
 
                     description = results.zip(diceRolls).joinToString("\n") { (res, roll) ->
                         val modifierSign = if (roll.mod <= 0) "" else "+"
@@ -142,7 +142,7 @@ class FunCommands {
 
             ctx.send(
                 embed {
-                    title = "$EMOJI_THINKING  I choose **${options.random()}**!"
+                    title = "${Emoji.THINKING}  I choose **${options.random()}**!"
                     description = options.toString()
                 }
             )
@@ -194,7 +194,7 @@ class FunCommands {
 
             ctx.send(
                 embed {
-                    title = "$EMOJI_BILLIARD_BALL  The 8-ball says:"
+                    title = "${Emoji.BILLIARD_BALL}  The 8-ball says:"
                     description = responses.random()
                 }
             )
@@ -302,7 +302,7 @@ class FunCommands {
             ctx.send(
                 embed {
                     comic.run {
-                        this@embed.title = "$EMOJI_FRAMED_PICTURE  XKCD Comic #**$num**:"
+                        this@embed.title = "${Emoji.FRAMED_PICTURE}  XKCD Comic #**$num**:"
                         description = """
                             |**Title**: $title
                             |**Alt text**: $alt
@@ -339,7 +339,7 @@ class FunCommands {
                 ctx.sendMessage(
                     embed {
                         statistics.run {
-                            title = "$EMOJI_SATELLITE  Info on the ISS:"
+                            title = "${Emoji.SATELLITE}  Info on the ISS:"
                             description = """
                                 |**Longitude**: ${longitudeStr()}
                                 |**Latitude**: ${latitudeStr()}
@@ -348,7 +348,7 @@ class FunCommands {
                             """.trimMargin()
                         }
                     }
-                ).addFile(File(image)).queue()
+                ).addFile(File(image)).await()
             }
         }
     }

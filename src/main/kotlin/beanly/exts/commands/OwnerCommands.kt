@@ -3,8 +3,8 @@
 package beanly.exts.commands
 
 import beanly.consts.EMBED_COLOR
-import beanly.exts.utility.ExecResult
-import beanly.exts.utility.executeKotlin
+import beanly.exts.commands.utility.ExecResult
+import beanly.exts.commands.utility.executeKotlin
 import beanly.trimToDescription
 import framework.core.annotations.CommandGroup
 import framework.api.dsl.command

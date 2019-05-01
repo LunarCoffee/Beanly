@@ -1,4 +1,4 @@
-package beanly.exts.utility.iss
+package beanly.exts.commands.utility.iss
 
 import kotlin.math.abs
 

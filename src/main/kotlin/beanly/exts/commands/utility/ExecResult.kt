@@ -1,10 +1,12 @@
-package beanly.exts.utility
+package beanly.exts.commands.utility
 
 import framework.core.CommandContext
 import framework.api.extensions.await
 import framework.api.extensions.error
 import framework.api.extensions.send
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import java.io.*
 import javax.script.ScriptEngineManager
@@ -45,11 +47,13 @@ suspend fun executeKotlin(ctx: CommandContext, codeLines: List<String>): ExecRes
     val tempStderr = ByteArrayOutputStream().also { System.setErr(PrintStream(it)) }
 
     val (time, result) = try {
-        scriptEngine.eval(
-            // This prepends imports and adds the actual code.
-            File("src/main/resources/ek_prelude.txt").readText().format(imports, code),
-            SimpleBindings().apply { put("ctx", ctx) }
-        ) as Pair<*, *>
+        withContext(Dispatchers.Default) {
+            scriptEngine.eval(
+                // This prepends imports and adds the actual code.
+                File("src/main/resources/ek_prelude.txt").readText().format(imports, code),
+                SimpleBindings().apply { put("ctx", ctx) }
+            ) as Pair<*, *>
+        }
     } catch (e: ScriptException) {
         ctx.error("Error during execution! Check your PMs for details.")
         ctx.event.author.openPrivateChannel().await().send(e.toString())

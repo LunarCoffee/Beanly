@@ -1,4 +1,4 @@
-package beanly.exts.utility
+package beanly.exts.commands.utility
 
 import java.lang.management.ManagementFactory
 

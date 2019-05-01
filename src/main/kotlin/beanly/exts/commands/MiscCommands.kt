@@ -2,10 +2,8 @@
 
 package beanly.exts.commands
 
-import beanly.consts.EMOJI_LAPTOP_COMPUTER
-import beanly.consts.EMOJI_OPEN_FILE_FOLDER
-import beanly.consts.EMOJI_PING_PONG
-import beanly.exts.utility.SystemStatistics
+import beanly.consts.Emoji
+import beanly.exts.commands.utility.SystemStatistics
 import beanly.trimToDescription
 import framework.api.dsl.command
 import framework.api.dsl.embed
@@ -40,7 +38,7 @@ class MiscCommands {
 
             ctx.send(
                 embed {
-                    title = "$EMOJI_PING_PONG  Pong!"
+                    title = "${Emoji.PING_PONG}  Pong!"
                     description = "[${ctx.jda.gatewayPing}ms, ${ping}ms, ${stackLatency}ns]"
                 }
             )
@@ -77,7 +75,7 @@ class MiscCommands {
 
             ctx.send(
                 embed {
-                    title = "$EMOJI_OPEN_FILE_FOLDER  Code statistics:"
+                    title = "${Emoji.OPEN_FILE_FOLDER}  Code statistics:"
                     description = """
                         **Lines of code**: $linesOfCode
                         **Lines with content**: ${linesOfCode - blankLines}
@@ -146,7 +144,7 @@ class MiscCommands {
             ctx.send(
                 embed {
                     SystemStatistics().run {
-                        title = "$EMOJI_LAPTOP_COMPUTER  System statistics:"
+                        title = "${Emoji.LAPTOP_COMPUTER}  System statistics:"
                         description = """
                             |**Memory usage**: ${totalMemory - freeMemory}/$totalMemory MB
                             |**Language**: $language

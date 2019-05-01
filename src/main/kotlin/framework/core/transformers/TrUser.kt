@@ -15,6 +15,8 @@ class TrUser(
         }
         val input = args.removeAt(0)
 
+        // TODO: SUPPORT MENTIONS
+
         return when {
             input.length == 18 -> event.jda.getUserById(input)
             input.matches(""".+#\d\d\d\d$""".toRegex()) -> event.jda.getUserByTag(input)

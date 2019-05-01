@@ -1,4 +1,4 @@
-package beanly.exts.utility
+package beanly.exts.commands.utility
 
 private val MATCH_REGEX = """(\d*)d(\d+)([+-]\d+)?""".toRegex()
 
