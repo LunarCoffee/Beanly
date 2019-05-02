@@ -15,6 +15,8 @@ import framework.core.transformers.TrTime
 import framework.core.transformers.TrUser
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserNotFound
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.exceptions.PermissionException
@@ -24,6 +26,17 @@ import kotlin.concurrent.schedule
 @CommandGroup("Moderation")
 class ModerationCommands {
     fun mute() = command("mute") {
+        description = "Mutes a member for a specified amount of time."
+        aliases = listOf("silence")
+
+        extDescription = """
+            |`$name user time [reason]`\n
+            |Mutes a user for a specified amount of time. I must have the permission to manage
+            |roles. When a member is kicked, they will be sent a message with `time` in a readable
+            |format, the provided `reason` (or `(no reason)`) if none is provided, and the user
+            |that muted them. You must be able to manage roles to use this command.
+        """.trimToDescription()
+
         expectedArgs = listOf(TrUser(), TrTime(), TrRest(true, "(no reason)"))
         execute { ctx, args ->
             val user = args.get<User>(0)
@@ -31,10 +44,10 @@ class ModerationCommands {
             val reason = args.get<String>(2)
             val guild = ctx.guild
 
-            // This uses the permission to manage messages as an allowance to mute.
+            // This uses the permission to manage roles as an allowance to mute.
             val guildAuthor = guild.getMember(ctx.event.author) ?: return@execute
-            if (!guildAuthor.hasPermission(Permission.MESSAGE_MANAGE)) {
-                ctx.error("You need to be able to manage messages to mute users!")
+            if (!guildAuthor.hasPermission(Permission.MANAGE_ROLES)) {
+                ctx.error("You need to be able to manage roles to mute users!")
                 return@execute
             }
 
@@ -44,30 +57,34 @@ class ModerationCommands {
                 return@execute
             }
 
-            // TODO: Add makeMutedRole method in utility package and make this shit work
+            // Assume the guild has a role with "muted" in it, and get it.
+            val mutedRole = guild.roles.find { it.name.contains("muted", true) }
+            if (mutedRole == null) {
+                ctx.error("I need to be able to assign a role with `muted` in its name!")
+                return@execute
+            }
 
-            for (channel in guild.textChannels) {
-                try {
-                    channel.createPermissionOverride(offender).setDeny(
-                        Permission.MESSAGE_WRITE,
-                        Permission.MESSAGE_ADD_REACTION
-                    )
-                } catch (e: PermissionException) {
-                    ctx.error("I don't have enough permissions to do that!")
-                    return@execute
-                }
+            val oldRoles = offender.roles
+            val pmChannel = user.openPrivateChannel().await()
 
-                // Schedule the unmute time.
-                Timer().schedule(time.totalMs) {
-                    channel.createPermissionOverride(offender).setAllow(
-                        Permission.MESSAGE_WRITE,
-                        Permission.MESSAGE_ADD_REACTION
-                    )
+            try {
+                guild.controller.modifyMemberRoles(offender, listOf(mutedRole), oldRoles).queue()
+            } catch (e: PermissionException) {
+                ctx.error("I don't have enough permissions to do that!")
+                return@execute
+            }
+
+            // Schedule the unmute time.
+            Timer().schedule(time.totalMs) {
+                guild.controller.modifyMemberRoles(offender, oldRoles, listOf(mutedRole)).queue()
+                GlobalScope.launch {
+                    ctx.success("**${offender.user.asTag}** has been unmuted!")
+                    pmChannel.success("You have been unmuted in **${guild.name}**!")
                 }
             }
 
             ctx.success("**${offender.user.asTag}** has been muted!")
-            user.openPrivateChannel().await().send(
+            pmChannel.send(
                 embed {
                     title = "${Emoji.HAMMER_AND_WRENCH}  You were muted!"
                     description = """

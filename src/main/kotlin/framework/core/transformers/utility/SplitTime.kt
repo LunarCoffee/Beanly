@@ -14,11 +14,16 @@ class SplitTime(val days: Long, val hours: Long, val minutes: Long, val seconds:
         .plusSeconds(seconds)!!
 
     override fun toString(): String {
+        val mtoDay = if (days != 1L) "s" else ""
+        val mtoHour = if (days != 1L) "s" else ""
+        val mtoMinute = if (days != 1L) "s" else ""
+        val mtoSecond = if (days != 1L) "s" else ""
+
         return arrayOf(
-            if (days > 0) "$days days" else "",
-            if (hours > 0) "$hours hours" else "",
-            if (minutes > 0) "$minutes minutes" else "",
-            if (seconds > 0) "$seconds seconds" else ""
+            if (days > 0) "$days day$mtoDay" else "",
+            if (hours > 0) "$hours hour$mtoHour" else "",
+            if (minutes > 0) "$minutes minute$mtoMinute" else "",
+            if (seconds > 0) "$seconds second$mtoSecond" else ""
         ).filter(String::isNotEmpty).joinToString()
     }
 
