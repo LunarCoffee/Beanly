@@ -2,8 +2,10 @@
 
 package beanly.exts.commands
 
+import beanly.consts.DB
 import beanly.consts.Emoji
 import beanly.consts.TIME_FORMATTER
+import beanly.exts.commands.utility.RemindTimer
 import beanly.gmtToEst
 import beanly.ifEmptyToString
 import beanly.trimToDescription
@@ -19,6 +21,8 @@ import framework.core.transformers.utility.UserNotFound
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.entities.User
+import org.litote.kmongo.coroutine.insertOne
+import java.time.Instant
 import java.util.*
 import kotlin.concurrent.schedule
 import kotlin.math.pow
@@ -194,6 +198,8 @@ class UtilityCommands {
     }
 
     fun remind() = command("remind") {
+        val reminderCol = DB.getCollection<RemindTimer>("RemindTimers")
+
         description = "Sets a reminder so you don't have to remember things!"
         aliases = listOf("reminder")
 
@@ -213,11 +219,23 @@ class UtilityCommands {
             val dateTime = time.asLocal.format(TIME_FORMATTER).replace(" at ", "` at `").drop(4)
             ctx.success("I'll remind you on `$dateTime`!")
 
-            Timer().schedule(time.totalMs) {
-                GlobalScope.launch {
-                    ctx.success(
-                        "Hey, ${ctx.event.author.asMention}! Here's your reminder: `$reason`"
-                    )
+            // Save in DB for reload on bot relaunch.
+            val reminderDate = RemindTimer(
+                Date.from(Instant.now().plusMillis(time.totalMs)),
+                ctx.guild.id,
+                ctx.event.channel.id,
+                ctx.event.author.asMention,
+                reason
+            )
+            reminderCol.insertOne(reminderDate)
+
+            reminderDate.run {
+                Timer().schedule(this@run.time) {
+                    GlobalScope.launch {
+                        ctx.jda.getGuildById(guildId)!!.getTextChannelById(channelId)!!.success(
+                            "Hey, $mention! Here's your reminder: `${this@run.reason}`"
+                        )
+                    }
                 }
             }
         }
