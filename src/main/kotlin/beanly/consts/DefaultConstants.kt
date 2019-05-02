@@ -12,3 +12,6 @@ val GSON = Gson()
 
 val CLIENT = KMongo.createClient().coroutine
 val DB = CLIENT.getDatabase("BeanlyTimerStorage")
+
+const val REMIND_TIMERS_COL_NAME = "RemindTimers5"
+const val MUTE_TIMERS_COL_NAME = "MuteTimers5"

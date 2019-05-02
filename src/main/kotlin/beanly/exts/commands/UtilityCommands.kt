@@ -4,8 +4,9 @@ package beanly.exts.commands
 
 import beanly.consts.DB
 import beanly.consts.Emoji
+import beanly.consts.REMIND_TIMERS_COL_NAME
 import beanly.consts.TIME_FORMATTER
-import beanly.exts.commands.utility.RemindTimer
+import beanly.exts.commands.utility.timers.RemindTimer
 import beanly.gmtToEst
 import beanly.ifEmptyToString
 import beanly.trimToDescription
@@ -18,13 +19,9 @@ import framework.core.annotations.CommandGroup
 import framework.core.transformers.*
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserNotFound
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.entities.User
-import org.litote.kmongo.coroutine.insertOne
 import java.time.Instant
 import java.util.*
-import kotlin.concurrent.schedule
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -198,7 +195,7 @@ class UtilityCommands {
     }
 
     fun remind() = command("remind") {
-        val reminderCol = DB.getCollection<RemindTimer>("RemindTimers")
+        val reminderCol = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
 
         description = "Sets a reminder so you don't have to remember things!"
         aliases = listOf("reminder")
@@ -219,25 +216,17 @@ class UtilityCommands {
             val dateTime = time.asLocal.format(TIME_FORMATTER).replace(" at ", "` at `").drop(4)
             ctx.success("I'll remind you on `$dateTime`!")
 
-            // Save in DB for reload on bot relaunch.
-            val reminderDate = RemindTimer(
+            val reminderTimer = RemindTimer(
                 Date.from(Instant.now().plusMillis(time.totalMs)),
                 ctx.guild.id,
                 ctx.event.channel.id,
                 ctx.event.author.asMention,
                 reason
             )
-            reminderCol.insertOne(reminderDate)
 
-            reminderDate.run {
-                Timer().schedule(this@run.time) {
-                    GlobalScope.launch {
-                        ctx.jda.getGuildById(guildId)!!.getTextChannelById(channelId)!!.success(
-                            "Hey, $mention! Here's your reminder: `${this@run.reason}`"
-                        )
-                    }
-                }
-            }
+            // Save in DB for reload on bot relaunch.
+            reminderCol.insertOne(reminderTimer)
+            reminderTimer.schedule(ctx.event, reminderCol)
         }
     }
 

@@ -1,8 +1,10 @@
 package beanly.exts.listeners
 
 import beanly.consts.DB
-import beanly.exts.commands.utility.RemindTimer
-import framework.api.extensions.success
+import beanly.consts.MUTE_TIMERS_COL_NAME
+import beanly.consts.REMIND_TIMERS_COL_NAME
+import beanly.exts.commands.utility.timers.MuteTimer
+import beanly.exts.commands.utility.timers.RemindTimer
 import framework.core.Bot
 import framework.core.annotations.ListenerGroup
 import kotlinx.coroutines.GlobalScope
@@ -10,31 +12,35 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import java.util.*
-import kotlin.concurrent.schedule
 
 @ListenerGroup
 class ReloadTimerListeners(private val bot: Bot) : ListenerAdapter() {
     override fun onReady(event: ReadyEvent) {
-        // Reload remind command timers.
+        reloadRemindTimers(event)
+        reloadMuteTimers(event)
+    }
+
+    private fun reloadRemindTimers(event: ReadyEvent) {
         GlobalScope.launch {
-            val remindTimers = DB.getCollection<RemindTimer>("RemindTimers").find().toList()
-            for (timer in remindTimers) {
-                timer.run {
-                    Timer().schedule(this@run.time) {
-                        GlobalScope.launch {
-                            val channel = event
-                                .jda
-                                .getGuildById(guildId)!!
-                                .getTextChannelById(channelId)!!
-                            channel.success(
-                                "Hey, $mention! Here's your reminder: `${this@run.reason}`"
-                            )
-                        }
-                    }
-                }
+            val remindTimers = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
+            val list = remindTimers.find().toList()
+
+            for (timer in list) {
+                timer.schedule(event, remindTimers)
             }
-            LOG.info("Reloaded ${remindTimers.size} reminder timers!")
+            LOG.info("Reloaded ${list.size} reminder timer(s)!")
+        }
+    }
+
+    private fun reloadMuteTimers(event: ReadyEvent) {
+        GlobalScope.launch {
+            val muteTimers = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
+            val list = muteTimers.find().toList()
+
+            for (timer in list) {
+                timer.schedule(event, muteTimers)
+            }
+            LOG.info("Reloaded ${list.size} mute timer(s)!")
         }
     }
 

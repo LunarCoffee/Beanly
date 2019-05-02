@@ -1,6 +1,9 @@
 package beanly.exts.commands
 
+import beanly.consts.DB
 import beanly.consts.Emoji
+import beanly.consts.MUTE_TIMERS_COL_NAME
+import beanly.exts.commands.utility.timers.MuteTimer
 import beanly.trimToDescription
 import framework.api.dsl.command
 import framework.api.dsl.embed
@@ -15,17 +18,17 @@ import framework.core.transformers.TrTime
 import framework.core.transformers.TrUser
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserNotFound
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.exceptions.PermissionException
+import java.time.Instant
 import java.util.*
-import kotlin.concurrent.schedule
 
 @CommandGroup("Moderation")
 class ModerationCommands {
     fun mute() = command("mute") {
+        val muteCol = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
+
         description = "Mutes a member for a specified amount of time."
         aliases = listOf("silence")
 
@@ -74,15 +77,6 @@ class ModerationCommands {
                 return@execute
             }
 
-            // Schedule the unmute time.
-            Timer().schedule(time.totalMs) {
-                guild.controller.modifyMemberRoles(offender, oldRoles, listOf(mutedRole)).queue()
-                GlobalScope.launch {
-                    ctx.success("**${offender.user.asTag}** has been unmuted!")
-                    pmChannel.success("You have been unmuted in **${guild.name}**!")
-                }
-            }
-
             ctx.success("**${offender.user.asTag}** has been muted!")
             pmChannel.send(
                 embed {
@@ -95,6 +89,20 @@ class ModerationCommands {
                     """.trimMargin()
                 }
             )
+
+            val muteTimer = MuteTimer(
+                Date.from(Instant.now().plusMillis(time.totalMs)),
+                ctx.guild.id,
+                ctx.event.channel.id,
+                offender.id,
+                oldRoles.map { it.id },
+                mutedRole.id,
+                reason
+            )
+
+            // Save in DB for reload on bot relaunch.
+            muteCol.insertOne(muteTimer)
+            muteTimer.schedule(ctx.event, muteCol)
         }
     }
 
