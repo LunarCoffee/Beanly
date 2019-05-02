@@ -1,19 +1,13 @@
 package beanly.exts.commands.utility
 
+import framework.core.transformers.utility.SplitTime
 import java.lang.management.ManagementFactory
 
 class SystemStatistics {
     val totalMemory = Runtime.getRuntime().totalMemory() / 1_000_000
     val freeMemory = Runtime.getRuntime().freeMemory() / 1_000_000
 
-    val uptime = ManagementFactory.getRuntimeMXBean().uptime.run {
-        val days = this / 86_400_000
-        val hours = this / 3_600_000 % 24
-        val minutes = this / 60_000 % 60
-        val seconds = this / 1000 % 60
-
-        "$days days, $hours hours, $minutes minutes, $seconds seconds"
-    }
+    val uptime = SplitTime(ManagementFactory.getRuntimeMXBean().uptime)
 
     val cpuArchitecture = retrieveCpuArchitecture()
     val logicalProcessors = Runtime.getRuntime().availableProcessors()
