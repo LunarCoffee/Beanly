@@ -11,7 +11,8 @@ val TIME_FORMATTER = DateTimeFormatter.ofPattern("E dd/MM/yyyy 'at' hh:mm a")!!
 val GSON = Gson()
 
 val CLIENT = KMongo.createClient().coroutine
-val DB = CLIENT.getDatabase("BeanlyTimerStorage")
+val DB = CLIENT.getDatabase("BeanlyMongoDB")
 
-const val REMIND_TIMERS_COL_NAME = "RemindTimers5"
-const val MUTE_TIMERS_COL_NAME = "MuteTimers5"
+const val REMIND_TIMERS_COL_NAME = "RemindTimers"
+const val MUTE_TIMERS_COL_NAME = "MuteTimers"
+const val NO_PAY_RESPECTS_COL_NAME = "NoPayRespects"

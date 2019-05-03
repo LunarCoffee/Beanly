@@ -1,16 +1,21 @@
 package beanly.exts.listeners
 
+import beanly.consts.DB
 import beanly.consts.Emoji
+import beanly.consts.NO_PAY_RESPECTS_COL_NAME
+import beanly.exts.commands.utility.NoPayRespects
 import framework.api.dsl.embed
 import framework.api.extensions.await
 import framework.core.Bot
 import framework.core.annotations.ListenerGroup
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import org.litote.kmongo.eq
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.schedule
@@ -18,9 +23,15 @@ import kotlin.concurrent.schedule
 @ListenerGroup
 class PayRespectsListeners(private val bot: Bot) : ListenerAdapter() {
     private val active = ConcurrentHashMap<String, Message>()
+    private val noPayRespectsCol = DB.getCollection<NoPayRespects>(NO_PAY_RESPECTS_COL_NAME)
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
-        if (event.author.isBot || !event.message.contentRaw.equals("f", ignoreCase = true)) {
+        val messageIsNotF = !event.message.contentRaw.equals("f", ignoreCase = true)
+        val guildNoPayRespects = runBlocking {
+            noPayRespectsCol.findOne(NoPayRespects::guildId eq event.guild.id)
+        }
+
+        if (event.author.isBot || messageIsNotF || guildNoPayRespects != null) {
             return
         }
 
@@ -38,7 +49,7 @@ class PayRespectsListeners(private val bot: Bot) : ListenerAdapter() {
 
             // Register the message and listen for reactions to it for one day.
             active[message.id] = message
-            Timer().schedule(86_400L) { active.remove(message.id) }
+            Timer().schedule(86_400_000L) { active.remove(message.id) }
         }
     }
 

@@ -16,32 +16,30 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 @ListenerGroup
 class ReloadTimerListeners(private val bot: Bot) : ListenerAdapter() {
     override fun onReady(event: ReadyEvent) {
-        reloadRemindTimers(event)
-        reloadMuteTimers(event)
-    }
-
-    private fun reloadRemindTimers(event: ReadyEvent) {
         GlobalScope.launch {
-            val remindTimers = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
-            val list = remindTimers.find().toList()
-
-            for (timer in list) {
-                timer.schedule(event, remindTimers)
-            }
-            LOG.info("Reloaded ${list.size} reminder timer(s)!")
+            reloadRemindTimers(event)
+            reloadMuteTimers(event)
         }
     }
 
-    private fun reloadMuteTimers(event: ReadyEvent) {
-        GlobalScope.launch {
-            val muteTimers = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
-            val list = muteTimers.find().toList()
+    private suspend fun reloadRemindTimers(event: ReadyEvent) {
+        val remindTimers = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
+        val list = remindTimers.find().toList()
 
-            for (timer in list) {
-                timer.schedule(event, muteTimers)
-            }
-            LOG.info("Reloaded ${list.size} mute timer(s)!")
+        for (timer in list) {
+            timer.schedule(event, remindTimers)
         }
+        LOG.info("Reloaded ${list.size} reminder timer(s)!")
+    }
+
+    private suspend fun reloadMuteTimers(event: ReadyEvent) {
+        val muteTimers = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
+        val list = muteTimers.find().toList()
+
+        for (timer in list) {
+            timer.schedule(event, muteTimers)
+        }
+        LOG.info("Reloaded ${list.size} mute timer(s)!")
     }
 
     companion object {

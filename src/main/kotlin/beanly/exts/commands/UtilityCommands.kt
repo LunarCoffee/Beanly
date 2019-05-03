@@ -8,7 +8,6 @@ import beanly.consts.REMIND_TIMERS_COL_NAME
 import beanly.consts.TIME_FORMATTER
 import beanly.exts.commands.utility.timers.RemindTimer
 import beanly.gmtToEst
-import beanly.ifEmptyToString
 import beanly.trimToDescription
 import framework.api.dsl.command
 import framework.api.dsl.embed
@@ -279,10 +278,11 @@ class UtilityCommands {
                         // The first line of the extended description should always be the command
                         // usage (i.e. `help [command name] [-v]`).
                         val usage = command.extDescription.substringBefore("\n")
+                        val aliases = if (command.aliases.count() == 0) "(none)" else toString()
 
                         title = "${Emoji.PAGE_FACING_UP}  Info on **${command.name}**:"
                         description = """
-                            |**Aliases**: ${command.aliases.ifEmptyToString()}
+                            |**Aliases**: $aliases
                             |**Description**: ${command.description}
                         """.trimMargin()
 
