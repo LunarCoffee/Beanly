@@ -50,7 +50,7 @@ class IssLocation {
 
                 // Draw ISS location marker.
                 font = Font(Font.SANS_SERIF, Font.BOLD, 60)
-                drawString("×", width / 2 - 20, height / 2 + 20)
+                drawString(Typography.times.toString(), width / 2 - 20, height / 2 + 20)
 
                 // Draw ISS label.
                 font = Font(Font.SANS_SERIF, Font.PLAIN, 42)

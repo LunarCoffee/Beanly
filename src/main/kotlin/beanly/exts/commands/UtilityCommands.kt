@@ -16,9 +16,10 @@ import framework.api.extensions.send
 import framework.api.extensions.success
 import framework.core.annotations.CommandGroup
 import framework.core.transformers.*
+import framework.core.transformers.utility.Found
+import framework.core.transformers.utility.NotFound
 import framework.core.transformers.utility.SplitTime
-import framework.core.transformers.utility.UserNotFound
-import net.dv8tion.jda.api.entities.User
+import framework.core.transformers.utility.UserSearchResult
 import java.time.Instant
 import java.util.*
 import kotlin.math.pow
@@ -39,17 +40,20 @@ class UtilityCommands {
 
         expectedArgs = listOf(TrUser(true))
         execute { ctx, args ->
-            if (args.get<User>(0) is UserNotFound) {
-                ctx.error("I can't find that user!")
-                return@execute
+            val user = when (val result = args.get<UserSearchResult?>(0)) {
+                is Found -> result.user
+                null -> ctx.event.author
+                else -> {
+                    ctx.error("I can't find that user!")
+                    return@execute
+                }
             }
-
-            val user = args[0] ?: ctx.event.author
-            val botOrUser = if (user.isBot) "bot" else "user"
 
             ctx.send(
                 embed {
                     user.run {
+                        val botOrUser = if (isBot) "bot" else "user"
+
                         title = "${Emoji.MAG_GLASS}  Info on $botOrUser **$asTag**:"
                         description = """
                             |**User ID**: $id
@@ -81,12 +85,14 @@ class UtilityCommands {
 
         expectedArgs = listOf(TrUser(true))
         execute { ctx, args ->
-            if (args.get<User>(0) is UserNotFound) {
-                ctx.error("I can't find that user!")
-                return@execute
+            val searchResult = args.get<UserSearchResult?>(0)
+            val member = when (val result = searchResult ?: Found(ctx.event.author)) {
+                is Found -> ctx.event.guild.getMember(result.user)
+                else -> {
+                    ctx.error("I can't find that user!")
+                    return@execute
+                }
             }
-
-            val member = ctx.event.guild.getMember(args[0] ?: ctx.event.author)
 
             if (member == null) {
                 ctx.error("That user is not a member of this server!")
@@ -94,17 +100,17 @@ class UtilityCommands {
             }
 
             ctx.send(
-                member.run {
-                    val botOrMember = if (user.isBot) "bot" else "member"
-                    val activity = activities.firstOrNull()?.name ?: "(none)"
+                embed {
+                    member.run {
+                        val botOrMember = if (user.isBot) "bot" else "member"
+                        val activity = activities.firstOrNull()?.name ?: "(none)"
 
-                    val userRoles = if (roles.isNotEmpty()) {
-                        "[${roles.joinToString { it.asMention }}]"
-                    } else {
-                        "(none)"
-                    }
+                        val userRoles = if (roles.isNotEmpty()) {
+                            "[${roles.joinToString { it.asMention }}]"
+                        } else {
+                            "(none)"
+                        }
 
-                    embed {
                         title = "${Emoji.MAG_GLASS}  Info on $botOrMember **${user.asTag}**:"
                         description = """
                             |**User ID**: $id
@@ -278,7 +284,11 @@ class UtilityCommands {
                         // The first line of the extended description should always be the command
                         // usage (i.e. `help [command name] [-v]`).
                         val usage = command.extDescription.substringBefore("\n")
-                        val aliases = if (command.aliases.count() == 0) "(none)" else toString()
+                        val aliases = if (command.aliases.count() == 0) {
+                            "(none)"
+                        } else {
+                            command.aliases.toString()
+                        }
 
                         title = "${Emoji.PAGE_FACING_UP}  Info on **${command.name}**:"
                         description = """

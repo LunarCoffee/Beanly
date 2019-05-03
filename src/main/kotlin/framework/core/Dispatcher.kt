@@ -2,14 +2,12 @@ package framework.core
 
 import framework.api.extensions.error
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import kotlin.math.min
 
 class Dispatcher(
     private val jda: JDA,
@@ -41,7 +39,7 @@ class Dispatcher(
 
         val command = commands
             .find { name in it.names }
-            ?: return suggestCommandNames(event, name)
+            ?: return
 
         // Owner only command and user ID check.
         if (command.ownerOnly && event.author.id != bot.config.ownerId) {
@@ -104,42 +102,6 @@ class Dispatcher(
 
         // Drop the first to remove the command name.
         return args.drop(1)
-    }
-
-    private fun suggestCommandNames(event: MessageReceivedEvent, name: String) {
-        // Don't do anything if the user sent only the prefix.
-        if (name.isBlank()) {
-            return
-        }
-
-        for (alias in bot.commandNames) {
-            if (nameDistance(name, alias) < 2) {
-                GlobalScope.launch {
-                    event.channel.error("That's not a command... did you mean `$alias`?") {
-                        delay(5000L)
-                        it.delete().queue()
-                    }
-                }
-                return
-            }
-        }
-    }
-
-    private fun nameDistance(first: String, second: String): Int {
-        val prev = IntArray(second.length + 1) { it }
-        val cur = IntArray(second.length + 1)
-        var cost: Int
-
-        for (i in 0 until first.length) {
-            cur[0] = i + 1
-            for (j in 0 until second.length) {
-                cost = if (first[i] == second[j]) 0 else 1
-                cur[j + 1] = min(cur[j] + 1, min(prev[j + 1] + 1, prev[j] + cost))
-            }
-            cur.copyInto(prev)
-        }
-
-        return cur[second.length]
     }
 
     companion object {

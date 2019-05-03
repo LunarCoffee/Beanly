@@ -16,11 +16,15 @@ import framework.core.transformers.TrInt
 import framework.core.transformers.TrRest
 import framework.core.transformers.TrTime
 import framework.core.transformers.TrUser
+import framework.core.transformers.utility.Found
+import framework.core.transformers.utility.NotFound
 import framework.core.transformers.utility.SplitTime
-import framework.core.transformers.utility.UserNotFound
+import framework.core.transformers.utility.UserSearchResult
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.exceptions.PermissionException
+import java.lang.IllegalArgumentException
 import java.time.Instant
 import java.util.*
 
@@ -42,7 +46,14 @@ class ModerationCommands {
 
         expectedArgs = listOf(TrUser(), TrTime(), TrRest(true, "(no reason)"))
         execute { ctx, args ->
-            val user = args.get<User>(0)
+            val user = when (val result = args.get<UserSearchResult>(0)) {
+                is Found -> result.user
+                else -> {
+                    ctx.error("I can't find that user!")
+                    return@execute
+                }
+            }
+
             val time = args.get<SplitTime>(1)
             val reason = args.get<String>(2)
             val guild = ctx.guild
@@ -55,8 +66,8 @@ class ModerationCommands {
             }
 
             val offender = guild.getMember(user)
-            if (user is UserNotFound || offender == null) {
-                ctx.error("I can't find that user!")
+            if (offender == null) {
+                ctx.error("That user is not a member of this server!")
                 return@execute
             }
 
@@ -118,7 +129,14 @@ class ModerationCommands {
 
         expectedArgs = listOf(TrUser(), TrRest(true, "(no reason)"))
         execute { ctx, args ->
-            val user = args.get<User>(0)
+            val user = when (val result = args.get<UserSearchResult>(0)) {
+                is Found -> result.user
+                else -> {
+                    ctx.error("I can't find that user!")
+                    return@execute
+                }
+            }
+
             val reason = args.get<String>(1)
             val guild = ctx.guild
 
@@ -130,8 +148,8 @@ class ModerationCommands {
             }
 
             val offender = guild.getMember(user)
-            if (user is UserNotFound || offender == null) {
-                ctx.error("I can't find that user!")
+            if (offender == null) {
+                ctx.error("That user is not a member of this server!")
                 return@execute
             }
 
@@ -173,7 +191,14 @@ class ModerationCommands {
 
         expectedArgs = listOf(TrUser(), TrRest(true, "(no reason)"))
         execute { ctx, args ->
-            val user = args.get<User>(0)
+            val user = when (val result = args.get<UserSearchResult>(0)) {
+                is Found -> result.user
+                else -> {
+                    ctx.error("I can't find that user!")
+                    return@execute
+                }
+            }
+
             val reason = args.get<String>(1)
             val guild = ctx.guild
 
@@ -185,8 +210,8 @@ class ModerationCommands {
             }
 
             val offender = guild.getMember(user)
-            if (user is UserNotFound || offender == null) {
-                ctx.error("I can't find that user!")
+            if (offender == null) {
+                ctx.error("That user is not a member of this server!")
                 return@execute
             }
 
@@ -230,7 +255,14 @@ class ModerationCommands {
         expectedArgs = listOf(TrInt(), TrUser(true))
         execute { ctx, args ->
             val limit = args.get<Int>(0)
-            val user = args.get<User?>(1)
+            val user = when (val result = args.get<UserSearchResult?>(1)) {
+                is Found -> result.user
+                null -> null
+                else -> {
+                    ctx.error("I can't find that user!")
+                    return@execute
+                }
+            }
 
             // Make sure the author can manage messages.
             val guildAuthor = ctx.guild.getMember(ctx.event.author) ?: return@execute
@@ -242,11 +274,6 @@ class ModerationCommands {
             // Don't get rate limited!
             if (limit !in 1..100) {
                 ctx.error("I can't purge that amount of messages!")
-                return@execute
-            }
-
-            if (user is UserNotFound) {
-                ctx.error("I can't find that user!")
                 return@execute
             }
 
@@ -264,6 +291,8 @@ class ModerationCommands {
                         channel.iterableHistory.take(limit + 1)
                     }
                 )
+            } catch (e: IllegalArgumentException) {
+                ctx.error("I can't delete some messages because they're too old!")
             } catch (e: PermissionException) {
                 ctx.error("I don't have enough permissions to do that!")
             }

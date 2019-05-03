@@ -1,9 +1,8 @@
 package beanly.exts.listeners
 
-import beanly.consts.DB
 import beanly.consts.Emoji
-import beanly.consts.NO_PAY_RESPECTS_COL_NAME
-import beanly.exts.commands.utility.NoPayRespects
+import beanly.consts.GUILD_OVERRIDES
+import beanly.exts.commands.utility.GO
 import framework.api.dsl.embed
 import framework.api.extensions.await
 import framework.core.Bot
@@ -23,15 +22,15 @@ import kotlin.concurrent.schedule
 @ListenerGroup
 class PayRespectsListeners(private val bot: Bot) : ListenerAdapter() {
     private val active = ConcurrentHashMap<String, Message>()
-    private val noPayRespectsCol = DB.getCollection<NoPayRespects>(NO_PAY_RESPECTS_COL_NAME)
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
         val messageIsNotF = !event.message.contentRaw.equals("f", ignoreCase = true)
         val guildNoPayRespects = runBlocking {
-            noPayRespectsCol.findOne(NoPayRespects::guildId eq event.guild.id)
-        }
+            GUILD_OVERRIDES.findOne(GO::id eq event.guild.id)?.noPayRespects
+        } ?: false
 
-        if (event.author.isBot || messageIsNotF || guildNoPayRespects != null) {
+        // The option to toggle the embed is provided by the <..togglef> command.
+        if (event.author.isBot || messageIsNotF || guildNoPayRespects) {
             return
         }
 
