@@ -20,18 +20,14 @@ class TrUser(
         }
         val input = args.removeAt(0)
 
-        val user = when {
-            input.length == 18 -> event.jda.getUserById(input)
-            input.matches(USER_TAG) -> event.jda.getUserByTag(input)
-            input.matches(USER_MENTION) -> event.jda.getUserById(input.drop(2).take(18))
-            else -> event.jda.getUsersByName(input, true).firstOrNull()
-        }
-
-        return if (user == null) {
-            NotFound
-        } else {
-            Found(user)
-        }
+        return Found(
+            when {
+                input.length == 18 -> event.jda.getUserById(input)
+                input.matches(USER_TAG) -> event.jda.getUserByTag(input)
+                input.matches(USER_MENTION) -> event.jda.getUserById(input.drop(2).take(18))
+                else -> event.jda.getUsersByName(input, true).firstOrNull()
+            } ?: return NotFound
+        )
     }
 
     companion object {

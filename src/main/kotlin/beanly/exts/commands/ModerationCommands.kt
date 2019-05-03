@@ -88,7 +88,7 @@ class ModerationCommands {
                 return@execute
             }
 
-            ctx.success("**${offender.user.asTag}** has been muted!")
+            ctx.success("`${offender.user.asTag}` has been muted!")
             pmChannel.send(
                 embed {
                     title = "${Emoji.HAMMER_AND_WRENCH}  You were muted!"
@@ -160,7 +160,7 @@ class ModerationCommands {
 
             try {
                 guild.controller.kick(offender, reason).await()
-                ctx.success("**${offender.user.asTag}** has been kicked!")
+                ctx.success("`${offender.user.asTag}` has been kicked!")
 
                 // Send PM to kicked user with information.
                 user.openPrivateChannel().await().send(
@@ -222,7 +222,7 @@ class ModerationCommands {
 
             try {
                 guild.controller.ban(offender, 0, reason).await()
-                ctx.success("**${offender.user.asTag}** has been banned!")
+                ctx.success("`${offender.user.asTag}` has been banned!")
 
                 // Send PM to kicked user with information.
                 user.openPrivateChannel().await().send(

@@ -17,7 +17,6 @@ import framework.api.extensions.success
 import framework.core.annotations.CommandGroup
 import framework.core.transformers.*
 import framework.core.transformers.utility.Found
-import framework.core.transformers.utility.NotFound
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserSearchResult
 import java.time.Instant
@@ -232,6 +231,52 @@ class UtilityCommands {
             // Save in DB for reload on bot relaunch.
             reminderCol.insertOne(reminderTimer)
             reminderTimer.schedule(ctx.event, reminderCol)
+        }
+    }
+
+    fun rev() = command("rev") {
+        description = "Reverses the given text."
+        aliases = listOf("reverse", "backwards")
+
+        extDescription = """
+            |`$name text [-w]`\n
+            |Reverses the given text, letter by letter if the `-w` flag is not specified, and word
+            |by word if it is specified (the text is simply split by spaces).
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrRest())
+        execute { ctx, args ->
+            val rawText = args.get<String>(0)
+            val byWords = rawText.endsWith(" -w")
+            val text = if (byWords) {
+                rawText.split(" ").dropLast(1).reversed().joinToString(" ")
+            } else {
+                rawText.reversed()
+            }
+
+            ctx.success("Your text reversed is `$text`")
+        }
+    }
+
+    fun len() = command("len") {
+        description = "Gets the length of the given text."
+        aliases = listOf("length")
+
+        extDescription = """
+            |`$name text [-w]`\n
+            |Counts the characters in the given text if the `-w` flag is not specified, and counts
+            |words if it is specified (the text is simply split by spaces).
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrRest())
+        execute { ctx, args ->
+            val rawText = args.get<String>(0)
+            val byWords = rawText.endsWith(" -w")
+
+            val length = if (byWords) rawText.split(" ").size - 1 else rawText.length
+            val charsOrWords = if (byWords) "words" else "characters"
+
+            ctx.success("Your text is `$length` $charsOrWords long.")
         }
     }
 
