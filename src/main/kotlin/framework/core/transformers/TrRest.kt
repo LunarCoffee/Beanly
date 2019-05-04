@@ -8,12 +8,16 @@ class TrRest(
 ) : Transformer<String> {
 
     override fun transform(event: MessageReceivedEvent, args: MutableList<String>): String {
+        val joined = args.joinToString(" ")
+        if (!optional && joined.isEmpty()) {
+            throw IllegalArgumentException()
+        }
+
         return if (optional && args.isEmpty()) {
             default
         } else {
-            args.joinToString(" ").also {
-                args.clear()
-            }
+            args.clear()
+            joined
         }
     }
 }

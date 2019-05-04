@@ -3,6 +3,7 @@
 package beanly.exts.commands
 
 import beanly.consts.EMBED_COLOR
+import beanly.consts.Emoji
 import beanly.exts.commands.utility.ExecResult
 import beanly.exts.commands.utility.executeKotlin
 import beanly.trimToDescription
@@ -20,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import java.util.regex.PatternSyntaxException
 import kotlin.system.exitProcess
 import kotlin.system.measureNanoTime
 
@@ -223,6 +225,41 @@ class OwnerCommands {
                     title = titleText
                     description = descriptionText
                     color = embedColor
+                }
+            )
+        }
+    }
+
+    fun regex() = command("regex") {
+        description = "Tests a regex against some cases."
+        aliases = listOf("testregex", "regularexpression")
+        ownerOnly = true
+
+        extDescription = """
+            |`$name regex cases...`\n
+            |This command attempts to match the given strings in `cases` with the given `regex`.
+            |It will report which ones matched and which didn't, and for those that matched, if
+            |there were groups, it will report those as well. The regex syntax is from Java. This
+            |command can only be used by my owner to prevent ReDOS attacks.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(), TrSplit())
+        execute { ctx, args ->
+            val regex = try {
+                args.get<String>(0).toRegex()
+            } catch (e: PatternSyntaxException) {
+                ctx.error("That regex isn't valid!")
+                return@execute
+            }
+            val cases = args.get<List<String>>(1)
+
+            ctx.send(
+                embed {
+                    title = "${Emoji.SCALES}  Testing regex **$regex**:"
+                    for (case in cases) {
+                        val match = regex.matchEntire(case)?.groupValues ?: "(no match)"
+                        description += "\n**$case**: $match"
+                    }
                 }
             )
         }

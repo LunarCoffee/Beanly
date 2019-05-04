@@ -21,6 +21,7 @@ import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserSearchResult
 import java.time.Instant
 import java.util.*
+import java.util.regex.PatternSyntaxException
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -247,6 +248,7 @@ class UtilityCommands {
         expectedArgs = listOf(TrRest())
         execute { ctx, args ->
             val rawText = args.get<String>(0)
+
             val byWords = rawText.endsWith(" -w")
             val text = if (byWords) {
                 rawText.split(" ").dropLast(1).reversed().joinToString(" ")
@@ -259,7 +261,7 @@ class UtilityCommands {
     }
 
     fun len() = command("len") {
-        description = "Gets the length of the given text."
+        description = "Shows the length of the given text."
         aliases = listOf("length")
 
         extDescription = """
