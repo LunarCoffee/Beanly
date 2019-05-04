@@ -41,7 +41,7 @@ class MuteTimer(
                 val channel = guild.getTextChannelById(channelId)!!
                 val pm = event.jda.getUserById(userId)!!.openPrivateChannel().await()
 
-                channel.success("**${user.asTag}** has been unmuted!")
+                channel.success("`${user.asTag}` has been unmuted!")
                 pm.success("You have been unmuted in **${guild.name}**!")
 
                 // Delete the timer so it doesn't activate on relaunch again.
