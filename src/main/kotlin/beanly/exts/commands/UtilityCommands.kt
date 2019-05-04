@@ -21,7 +21,6 @@ import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserSearchResult
 import java.time.Instant
 import java.util.*
-import java.util.regex.PatternSyntaxException
 import kotlin.math.pow
 import kotlin.math.roundToInt
 

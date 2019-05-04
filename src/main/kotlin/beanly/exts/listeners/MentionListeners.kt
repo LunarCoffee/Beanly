@@ -6,12 +6,12 @@ import framework.core.Bot
 import framework.core.annotations.ListenerGroup
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 
 @ListenerGroup
 class MentionListeners(private val bot: Bot) : ListenerAdapter() {
-    override fun onMessageReceived(event: MessageReceivedEvent) {
+    override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         val content = event.message.contentRaw
 
         // React to the message if it contained a mention to the owner or the bot.

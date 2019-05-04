@@ -11,8 +11,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.litote.kmongo.eq
 import java.util.*
@@ -23,7 +23,7 @@ import kotlin.concurrent.schedule
 class PayRespectsListeners(private val bot: Bot) : ListenerAdapter() {
     private val active = ConcurrentHashMap<String, Message>()
 
-    override fun onMessageReceived(event: MessageReceivedEvent) {
+    override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         val messageIsNotF = !event.message.contentRaw.equals("f", ignoreCase = true)
         val guildNoPayRespects = runBlocking {
             GUILD_OVERRIDES.findOne(GO::id eq event.guild.id)?.noPayRespects
@@ -52,7 +52,7 @@ class PayRespectsListeners(private val bot: Bot) : ListenerAdapter() {
         }
     }
 
-    override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
+    override fun onGuildMessageReactionAdd(event: GuildMessageReactionAddEvent) {
         val emote = event.reactionEmote
         if (event.user.isBot || emote.isEmoji && emote.emoji != Emoji.INDICATOR_F.toString()) {
             return

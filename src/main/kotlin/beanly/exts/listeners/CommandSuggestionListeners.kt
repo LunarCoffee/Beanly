@@ -9,26 +9,20 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import net.dv8tion.jda.api.entities.ChannelType
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.litote.kmongo.eq
 import kotlin.math.min
 
 @ListenerGroup
 class CommandSuggestionListeners(private val bot: Bot) : ListenerAdapter() {
-    override fun onMessageReceived(event: MessageReceivedEvent) {
+    override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
+        val notBeanlyCommand = !event.message.contentRaw.startsWith(bot.config.prefix)
         val noCommandSuggestions = runBlocking {
             GUILD_OVERRIDES.findOne(GO::id eq event.guild.id)?.noSuggestCommands
         } ?: false
 
-        // Keep things sane (PMs and group chats aren't allowed because I'm lazy).
-        if (!event.message.contentRaw.startsWith(bot.config.prefix)
-            || event.author.isBot
-            || event.channelType == ChannelType.PRIVATE
-            || event.channelType == ChannelType.PRIVATE
-            || noCommandSuggestions
-        ) {
+        if (notBeanlyCommand || event.author.isBot || noCommandSuggestions) {
             return
         }
 
@@ -38,7 +32,7 @@ class CommandSuggestionListeners(private val bot: Bot) : ListenerAdapter() {
         }
     }
 
-    private fun suggestCommandNames(event: MessageReceivedEvent, name: String) {
+    private fun suggestCommandNames(event: GuildMessageReceivedEvent, name: String) {
         // Don't do anything if the user sent only the prefix.
         if (name.isBlank()) {
             return
