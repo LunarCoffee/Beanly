@@ -37,7 +37,7 @@ open class Bot(configPath: String) {
     private val groupToCommands = commandGroups
         .map { group -> group.methods.filter { it.returnType == BaseCommand::class.java } }
         .zip(commandGroups.map { it.newInstance() })
-        .map { (methods, group) ->
+        .associate { (methods, group) ->
             val annotation = group::class.annotations.find { it is CommandGroup } as CommandGroup
             annotation to methods.map {
                 (it.invoke(group) as BaseCommand).apply {
@@ -45,7 +45,6 @@ open class Bot(configPath: String) {
                 }
             }
         }
-        .toMap()
         .also {
             log.info {
                 val groupNames = it.keys.map { it.name }

@@ -5,10 +5,12 @@ import beanly.consts.Emoji
 import beanly.consts.MUTE_TIMERS_COL_NAME
 import beanly.exts.commands.utility.banAction
 import beanly.exts.commands.utility.muteAction
+import beanly.exts.commands.utility.muteInfo
 import beanly.exts.commands.utility.timers.MuteTimer
 import beanly.trimToDescription
 import framework.api.dsl.command
 import framework.api.dsl.embed
+import framework.api.dsl.embedPaginator
 import framework.api.extensions.await
 import framework.api.extensions.error
 import framework.api.extensions.send
@@ -19,6 +21,7 @@ import framework.core.transformers.TrRest
 import framework.core.transformers.TrTime
 import framework.core.transformers.TrUser
 import framework.core.transformers.utility.Found
+import framework.core.transformers.utility.NotFound
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserSearchResult
 import net.dv8tion.jda.api.Permission
@@ -38,7 +41,7 @@ class ModerationCommands {
         extDescription = """
             |`$name user time [reason]`\n
             |Mutes a user for a specified amount of time. I must have the permission to manage
-            |roles. When a member is kicked, they will be sent a message with `time` in a readable
+            |roles. When a member is muted, they will be sent a message with `time` in a readable
             |format, the provided `reason` (or `(no reason)`) if none is provided, and the user
             |that muted them. You must be able to manage roles to use this command.
         """.trimToDescription()
@@ -96,10 +99,13 @@ class ModerationCommands {
         val muteCol = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
 
         description = "Unmutes a currently muted member."
-        aliases = listOf("silence")
+        aliases = listOf("unsilence")
 
         extDescription = """
             |`$name user`\n
+            |Unmutes a muted user. This only works if the user was muted with the `..mute` command
+            |from this bot. The unmuted user will be sent a message with the person who unmuted
+            |them. You must be able to manage roles to use this command.
         """.trimToDescription()
 
         expectedArgs = listOf(TrUser())
@@ -136,6 +142,58 @@ class ModerationCommands {
                 )
                 muteCol.deleteOne(MuteTimer::userId eq offender.id)
             }
+        }
+    }
+
+    fun mutelist() = command("mutelist") {
+        val muteCol = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
+
+        description = "Shows the muted members on the current server."
+        aliases = listOf("silenced")
+
+        extDescription = """
+            |`$name [user]`\n
+            |
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrUser(true))
+        execute { ctx, args ->
+            when (val result = args.get<UserSearchResult?>(0)) {
+                is Found -> return@execute muteInfo(ctx, muteCol, result.user)
+                NotFound -> {
+                    ctx.error("I can't find that user!")
+                    return@execute
+                }
+            }
+
+            val mutedPages = muteCol
+                .find(MuteTimer::guildId eq ctx.guild.id)
+                .toList()
+                .associate { it to ctx.guild.getMemberById(it.userId)!! }
+                .map { (timer, member) ->
+                    val time = SplitTime(timer.time.time - Date().time)
+                    "**${member.user.asTag}**: $time"
+                }
+                .chunked(16)
+                .map { it.joinToString("\n") }
+
+            if (mutedPages.isEmpty()) {
+                ctx.success("No one in this server is muted!")
+                return@execute
+            }
+
+            ctx.send(
+                embedPaginator(ctx.event.author) {
+                    for (members in mutedPages) {
+                        page(
+                            embed {
+                                title = "${Emoji.MUTE}  Currently muted members:"
+                                description = members
+                            }
+                        )
+                    }
+                }
+            )
         }
     }
 
@@ -249,7 +307,9 @@ class ModerationCommands {
         description = "Unbans a member from a server."
         extDescription = """
             |`$name user`\n
-            |Unbans a user from the current server.
+            |Unbans a banned user from the current server. I must have the permission to ban
+            |members. When a member is unbanned, they will be sent a message with the person who
+            |unbanned them. You must be able to ban members to use this command.
         """.trimToDescription()
 
         expectedArgs = listOf(TrUser())

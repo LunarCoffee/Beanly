@@ -1,9 +1,14 @@
 package beanly.exts.commands.utility
 
+import beanly.consts.Emoji
+import beanly.exts.commands.utility.timers.MuteTimer
+import framework.api.dsl.embed
 import framework.api.extensions.error
+import framework.api.extensions.send
 import framework.core.CommandArguments
 import framework.core.CommandContext
 import framework.core.transformers.utility.Found
+import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserSearchResult
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
@@ -11,6 +16,9 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.exceptions.PermissionException
+import org.litote.kmongo.coroutine.CoroutineCollection
+import org.litote.kmongo.eq
+import java.util.*
 
 suspend inline fun muteAction(
     ctx: CommandContext,
@@ -48,6 +56,37 @@ suspend inline fun muteAction(
 
     // This is a mute or unmute command.
     action(guild, user, offender, mutedRole)
+}
+
+// Sends information about a muted user.
+suspend fun muteInfo(ctx: CommandContext, muteCol: CoroutineCollection<MuteTimer>, user: User) {
+    val member = ctx.event.guild.getMember(user)
+    if (member == null) {
+        ctx.error("That user is not a member of this server!")
+        return
+    }
+
+    val timer = muteCol.findOne(MuteTimer::userId eq member.id)
+    if (timer == null) {
+        ctx.error("That member isn't muted!")
+        return
+    }
+
+    val time = SplitTime(timer.time.time - Date().time)
+    val prevRoles = timer
+        .prevRoles
+        .mapNotNull { ctx.guild.getRoleById(it)?.asMention }
+
+    ctx.send(
+        embed {
+            title = "${Emoji.MUTE}  Info on muted member **${member.user.asTag}**:"
+            description = """
+                |**Time remaining**: $time
+                |**Previous roles**: $prevRoles
+                |**Reason**: ${timer.reason}
+            """.trimMargin()
+        }
+    )
 }
 
 suspend inline fun banAction(
