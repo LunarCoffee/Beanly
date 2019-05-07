@@ -100,4 +100,4 @@ class EmbedDsl {
     }
 }
 
-fun embed(init: EmbedDsl.() -> Unit) = EmbedDsl().apply(init).create()
+inline fun embed(crossinline init: EmbedDsl.() -> Unit) = EmbedDsl().apply(init).create()

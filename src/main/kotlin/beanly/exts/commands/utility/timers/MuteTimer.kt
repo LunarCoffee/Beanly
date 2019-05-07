@@ -2,11 +2,16 @@
 
 package beanly.exts.commands.utility.timers
 
+import beanly.consts.Emoji
+import framework.api.dsl.embed
 import framework.api.extensions.await
+import framework.api.extensions.send
 import framework.api.extensions.success
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.events.Event
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.eq
 import java.util.*
@@ -24,9 +29,15 @@ class MuteTimer(
 
     override fun <T : Any> schedule(event: Event, col: CoroutineCollection<T>) {
         Timer().schedule(time) {
+            // Stop if the mute is no longer in the database (it has been removed manually).
+            val muteStillActive = runBlocking { col.findOne(::userId eq userId) != null }
+            if (!muteStillActive) {
+                @Suppress("LABEL_NAME_CLASH")
+                return@schedule
+            }
+
             val user = event.jda.getUserById(userId)!!
             val guild = event.jda.getGuildById(guildId)!!
-
 
             try {
                 // Remove muted role and re-add original roles.
@@ -44,7 +55,15 @@ class MuteTimer(
                     val pm = event.jda.getUserById(userId)!!.openPrivateChannel().await()
 
                     channel.success("`${user.asTag}` has been unmuted!")
-                    pm.success("You have been unmuted in **${guild.name}**!")
+                    pm.send(
+                        embed {
+                            title = "${Emoji.HAMMER_AND_WRENCH}  You were automatically unmuted!"
+                            description = """
+                                |**Server name**: ${guild.name}
+                                |**Unmuter**: ${(event as? MessageReceivedEvent)!!.author.asTag}
+                            """.trimMargin()
+                        }
+                    )
                 }
             } finally {
                 // Delete the timer so it doesn't activate on relaunch again. This is in a

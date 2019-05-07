@@ -3,6 +3,8 @@ package beanly.exts.commands
 import beanly.consts.DB
 import beanly.consts.Emoji
 import beanly.consts.MUTE_TIMERS_COL_NAME
+import beanly.exts.commands.utility.banAction
+import beanly.exts.commands.utility.muteAction
 import beanly.exts.commands.utility.timers.MuteTimer
 import beanly.trimToDescription
 import framework.api.dsl.command
@@ -21,6 +23,7 @@ import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserSearchResult
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.exceptions.PermissionException
+import org.litote.kmongo.eq
 import java.time.Instant
 import java.util.*
 
@@ -42,74 +45,97 @@ class ModerationCommands {
 
         expectedArgs = listOf(TrUser(), TrTime(), TrRest(true, "(no reason)"))
         execute { ctx, args ->
-            val user = when (val result = args.get<UserSearchResult>(0)) {
-                is Found -> result.user
-                else -> {
-                    ctx.error("I can't find that user!")
-                    return@execute
-                }
-            }
-
             val time = args.get<SplitTime>(1)
             val reason = args.get<String>(2)
-            val guild = ctx.guild
 
-            // This uses the permission to manage roles as an allowance to mute.
-            val guildAuthor = guild.getMember(ctx.event.author) ?: return@execute
-            if (!guildAuthor.hasPermission(Permission.MANAGE_ROLES)) {
-                ctx.error("You need to be able to manage roles to mute users!")
-                return@execute
-            }
+            muteAction(ctx, args) { guild, user, offender, mutedRole ->
+                val oldRoles = offender.roles
+                val pmChannel = user.openPrivateChannel().await()
 
-            val offender = guild.getMember(user)
-            if (offender == null) {
-                ctx.error("That user is not a member of this server!")
-                return@execute
-            }
-
-            // Assume the guild has a role with "muted" in it, and get it.
-            val mutedRole = guild.roles.find { it.name.contains("muted", true) }
-            if (mutedRole == null) {
-                ctx.error("I need to be able to assign a role with `muted` in its name!")
-                return@execute
-            }
-
-            val oldRoles = offender.roles
-            val pmChannel = user.openPrivateChannel().await()
-
-            try {
-                guild.controller.modifyMemberRoles(offender, listOf(mutedRole), oldRoles).queue()
-            } catch (e: PermissionException) {
-                ctx.error("I don't have enough permissions to do that!")
-                return@execute
-            }
-
-            ctx.success("`${offender.user.asTag}` has been muted!")
-            pmChannel.send(
-                embed {
-                    title = "${Emoji.HAMMER_AND_WRENCH}  You were muted!"
-                    description = """
-                        |**Server name**: ${guild.name}
-                        |**Muter**: ${ctx.event.author.asTag}
-                        |**Time**: $time
-                        |**Reason**: $reason
-                    """.trimMargin()
+                try {
+                    guild
+                        .controller
+                        .modifyMemberRoles(offender, listOf(mutedRole), oldRoles)
+                        .queue()
+                } catch (e: PermissionException) {
+                    ctx.error("I don't have enough permissions to do that!")
+                    return@muteAction
                 }
-            )
 
-            val muteTimer = MuteTimer(
-                Date.from(Instant.now().plusMillis(time.totalMs)),
-                ctx.guild.id,
-                ctx.event.channel.id,
-                offender.id,
-                oldRoles.map { it.id },
-                mutedRole.id,
-                reason
-            )
+                ctx.success("`${offender.user.asTag}` has been muted!")
+                pmChannel.send(
+                    embed {
+                        title = "${Emoji.HAMMER_AND_WRENCH}  You were muted!"
+                        description = """
+                            |**Server name**: ${guild.name}
+                            |**Muter**: ${ctx.event.author.asTag}
+                            |**Time**: $time
+                            |**Reason**: $reason
+                        """.trimMargin()
+                    }
+                )
 
-            // Save in DB for reload on bot relaunch.
-            muteCol.insertOne(muteTimer)
-            muteTimer.schedule(ctx.event, muteCol)
+                val muteTimer = MuteTimer(
+                    Date.from(Instant.now().plusMillis(time.totalMs)),
+                    ctx.guild.id,
+                    ctx.event.channel.id,
+                    offender.id,
+                    oldRoles.map { it.id },
+                    mutedRole.id,
+                    reason
+                )
+
+                // Save in DB for reload on bot relaunch.
+                muteCol.insertOne(muteTimer)
+                muteTimer.schedule(ctx.event, muteCol)
+            }
+        }
+    }
+
+    fun unmute() = command("unmute") {
+        val muteCol = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
+
+        description = "Unmutes a currently muted member."
+        aliases = listOf("silence")
+
+        extDescription = """
+            |`$name user`\n
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrUser())
+        execute { ctx, args ->
+            muteAction(ctx, args) { guild, user, offender, mutedRole ->
+                val timer = muteCol.findOne(MuteTimer::userId eq user.id)
+                if (timer == null) {
+                    ctx.error("That member isn't muted!")
+                    return@muteAction
+                }
+
+                val originalRoles = ctx.guild.roles.filter { it.id in timer.prevRoles }
+                val pmChannel = user.openPrivateChannel().await()
+
+                try {
+                    guild
+                        .controller
+                        .modifyMemberRoles(offender, originalRoles, listOf(mutedRole))
+                        .queue()
+                } catch (e: PermissionException) {
+                    ctx.error("I don't have enough permissions to do that!")
+                    return@muteAction
+                }
+
+                ctx.success("`${offender.user.asTag}` has been unmuted!")
+                pmChannel.send(
+                    embed {
+                        title = "${Emoji.HAMMER_AND_WRENCH}  You were manually unmuted!"
+                        description = """
+                            |**Server name**: ${guild.name}
+                            |**Unmuter**: ${ctx.event.author.asTag}
+                        """.trimMargin()
+                    }
+                )
+                muteCol.deleteOne(MuteTimer::userId eq offender.id)
+            }
         }
     }
 
@@ -187,41 +213,25 @@ class ModerationCommands {
 
         expectedArgs = listOf(TrUser(), TrRest(true, "(no reason)"))
         execute { ctx, args ->
-            val user = when (val result = args.get<UserSearchResult>(0)) {
-                is Found -> result.user
-                else -> {
-                    ctx.error("I can't find that user!")
-                    return@execute
-                }
-            }
-
             val reason = args.get<String>(1)
-            val guild = ctx.guild
 
-            // Make sure the author can kick members.
-            val guildAuthor = guild.getMember(ctx.event.author) ?: return@execute
-            if (!guildAuthor.hasPermission(Permission.BAN_MEMBERS)) {
-                ctx.error("You need to be able to ban members!")
-                return@execute
-            }
+            banAction(ctx, args) { guild, user ->
+                val offender = guild.getMember(user)
+                if (offender == null) {
+                    ctx.error("That user is not a member of this server!")
+                    return@banAction
+                }
 
-            val offender = guild.getMember(user)
-            if (offender == null) {
-                ctx.error("That user is not a member of this server!")
-                return@execute
-            }
+                if (!guild.selfMember.canInteract(offender)) {
+                    ctx.error("I don't have enough permissions to do that!")
+                    return@banAction
+                }
 
-            if (!guild.selfMember.canInteract(offender)) {
-                ctx.error("I don't have enough permissions to do that!")
-                return@execute
-            }
-
-            try {
                 guild.controller.ban(offender, 0, reason).await()
                 ctx.success("`${offender.user.asTag}` has been banned!")
 
-                // Send PM to kicked user with information.
-                user.openPrivateChannel().await().send(
+                // Send PM to banned user with information.
+                offender.user.openPrivateChannel().await().send(
                     embed {
                         title = "${Emoji.HAMMER_AND_WRENCH}  You were banned!"
                         description = """
@@ -231,8 +241,33 @@ class ModerationCommands {
                         """.trimMargin()
                     }
                 )
-            } catch (e: PermissionException) {
-                ctx.error("I don't have enough permissions to do that!")
+            }
+        }
+    }
+
+    fun unban() = command("unban") {
+        description = "Unbans a member from a server."
+        extDescription = """
+            |`$name user`\n
+            |Unbans a user from the current server.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrUser())
+        execute { ctx, args ->
+            banAction(ctx, args) { guild, user ->
+                guild.controller.unban(user).await()
+                ctx.success("`${user.asTag}` has been unbanned!")
+
+                // Send PM to unbanned user with information.
+                user.openPrivateChannel().await().send(
+                    embed {
+                        title = "${Emoji.HAMMER_AND_WRENCH}  You were unbanned!"
+                        description = """
+                            |**Server name**: ${guild.name}
+                            |**Unbanner**: ${ctx.event.author.asTag}
+                        """.trimMargin()
+                    }
+                )
             }
         }
     }

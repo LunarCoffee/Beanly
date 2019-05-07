@@ -1,6 +1,6 @@
 package framework.core
 
-fun <T> silence(f: () -> T): T? {
+inline fun <T> silence(crossinline f: () -> T): T? {
     return try {
         f()
     } catch (e: Exception) {

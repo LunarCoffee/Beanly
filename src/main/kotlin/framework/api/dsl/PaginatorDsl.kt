@@ -18,10 +18,18 @@ class EmbedPaginatorDsl(creator: User) : EmbedPaginator(creator) {
     }
 }
 
-fun messagePaginator(creator: User, init: MessagePaginatorDsl.() -> Unit): MessagePaginator {
+inline fun messagePaginator(
+    creator: User,
+    crossinline init: MessagePaginatorDsl.() -> Unit
+): MessagePaginator {
+
     return MessagePaginatorDsl(creator).apply(init)
 }
 
-fun embedPaginator(creator: User, init: EmbedPaginatorDsl.() -> Unit): EmbedPaginator {
+inline fun embedPaginator(
+    creator: User,
+    crossinline init: EmbedPaginatorDsl.() -> Unit
+): EmbedPaginator {
+
     return EmbedPaginatorDsl(creator).apply(init)
 }

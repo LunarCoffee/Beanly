@@ -17,8 +17,6 @@ class TrIntRange(
             val start = startStr.toIntOrNull() ?: return returnOrThrow()
             val end = endStr.toIntOrNull() ?: return returnOrThrow()
 
-            println("$start $end")
-
             if (start >= end) {
                 return returnOrThrow()
             }

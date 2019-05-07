@@ -210,7 +210,8 @@ class UtilityCommands {
             |This command takes a time string that looks something like `3h 40m` or `1m 30s` or
             |`2d 4h 32m 58s`, and optionally, a reason to remind you of. After the amount of time
             |specified in `time`, I will ping you in the channel you send the command in and remind
-            |you of what you told me to.
+            |you of what you told me to. Also, if your reminder doesn't fire and you get promoted
+            |to a customer or your house burns down, it isn't my fault.
         """.trimToDescription()
 
         expectedArgs = listOf(TrTime(), TrRest(true, "(no reason)"))
@@ -239,7 +240,7 @@ class UtilityCommands {
         val reminderCol = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
 
         description = "Lets you view and cancel your reminders."
-        aliases = listOf("listreminders")
+        aliases = listOf("remindmanage")
 
         extDescription = """
             |`$name [list|cancel] [id|range]`\n
@@ -271,59 +272,53 @@ class UtilityCommands {
             }
             val rangeIsMoreThanOne = range.count() > 1
 
-            when (operation) {
-                "list" -> {
-                    val list = reminderCol
-                        .find(RemindTimer::mention eq ctx.event.author.asMention)
-                        .toList()
+            if (operation == "list") {
+                val list = reminderCol
+                    .find(RemindTimer::mention eq ctx.event.author.asMention)
+                    .toList()
 
-                    if (list.isEmpty()) {
-                        ctx.success("You have no reminders!")
-                        return@execute
+                if (list.isEmpty()) {
+                    ctx.success("You have no reminders!")
+                    return@execute
+                }
+
+                ctx.send(
+                    embed {
+                        title = "${Emoji.ALARM_CLOCK}  Your reminders:"
+                        description = list.mapIndexed { i, reminder ->
+                            val time = SplitTime(reminder.time.time - Date().time)
+                                .asLocal
+                                .format(TIME_FORMATTER)
+                                .drop(4)
+
+                            "**#${i + 1}**: `${reminder.reason.replace("`", "")}` on $time"
+                        }.joinToString("\n")
                     }
+                )
+            } else if (operation == "cancel") {
+                val reminders = reminderCol
+                    .find(RemindTimer::mention eq ctx.event.author.asMention)
+                    .toList()
 
-                    ctx.send(
-                        embed {
-                            title = "${Emoji.ALARM_CLOCK}  Your reminders:"
-                            description = list.mapIndexed { i, reminder ->
-                                val time = SplitTime(reminder.time.time - Date().time)
-                                    .asLocal
-                                    .format(TIME_FORMATTER)
-                                    .drop(4)
-
-                                "**#${i + 1}**: `${reminder.reason.replace("`", "")}` on $time"
-                            }.joinToString("\n")
+                // Check that the reminder number or range exists.
+                if (reminders.size + 1 in range) {
+                    ctx.error(
+                        if (rangeIsMoreThanOne) {
+                            "Some of those reminders don't exist!"
+                        } else {
+                            "A reminder with that number doesn't exist!"
                         }
                     )
+                    return@execute
                 }
-                "cancel" -> {
-                    val reminders = reminderCol
-                        .find(RemindTimer::mention eq ctx.event.author.asMention)
-                        .toList()
 
-                    // Check that the reminder number or range exists.
-                    if (reminders.size + 1 in range) {
-                        ctx.error(
-                            if (rangeIsMoreThanOne) {
-                                "Some of those reminders don't exist!"
-                            } else {
-                                "A reminder with that number doesn't exist!"
-                            }
-                        )
-                        return@execute
-                    }
-
-                    // Can't seem to use [deleteMany] since we need to check indices.
-                    for (index in range) {
-                        reminderCol.deleteOne(reminders[index - 1].isSame())
-                    }
-
-                    val pluralThat = if (rangeIsMoreThanOne) "those reminders" else "that reminder"
-                    ctx.success("I've removed $pluralThat!")
+                // Can't seem to use [deleteMany] since we need to check indices.
+                for (index in range) {
+                    reminderCol.deleteOne(reminders[index - 1].isSame())
                 }
-                else -> {
-                    ctx.error("That isn't a valid operation! Type `..help reminders` for info.")
-                }
+
+                val pluralThat = if (rangeIsMoreThanOne) "those reminders" else "that reminder"
+                ctx.success("I've removed $pluralThat!")
             }
         }
     }

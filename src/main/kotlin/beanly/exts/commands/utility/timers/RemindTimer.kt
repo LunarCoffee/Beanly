@@ -27,7 +27,6 @@ class RemindTimer(
             // Stop if the reminder is no longer in the database (it has been removed manually).
             val reminderStillActive = runBlocking { col.findOne(isSame()) != null }
             if (!reminderStillActive) {
-                GlobalScope.launch { col.deleteOne(::time eq time) }
                 @Suppress("LABEL_NAME_CLASH")
                 return@schedule
             }
@@ -44,16 +43,16 @@ class RemindTimer(
             } finally {
                 // Delete the timer so it doesn't activate on relaunch again. This must execute
                 // or the reminder will be stuck forever.
-                GlobalScope.launch { col.deleteOne(::time eq time) }
+                GlobalScope.launch { col.deleteOne(isSame()) }
             }
         }
     }
 
     fun isSame(): Bson {
         return and(
-            RemindTimer::mention eq mention,
-            RemindTimer::time eq time,
-            RemindTimer::reason eq reason
+            ::mention eq mention,
+            ::time eq time,
+            ::reason eq reason
         )
     }
 }

@@ -18,7 +18,7 @@ class BotDsl(configPath: String) : Bot(configPath) {
         }
 }
 
-fun startBot(configPath: String, init: BotDsl.() -> Unit): Bot {
+inline fun startBot(configPath: String, crossinline init: BotDsl.() -> Unit): Bot {
     return BotDsl(configPath).apply {
         init()
         loadCommands()
