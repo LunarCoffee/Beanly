@@ -242,13 +242,34 @@ class UtilityCommands {
         aliases = listOf("listreminders")
 
         extDescription = """
-            |`$name [list|cancel] [id]`\n
+            |`$name [list|cancel] [id|range]`\n
+            |This command can list all of your active reminders or cancel one or more of said
+            |reminders. Using the command without arguments will list active reminders, and using
+            |it with two will cancel one. When cancelling, the first argument needs to be `cancel`
+            |and the second needs to be either a number or inclusive range (like `1-3` or `4-5`)
+            |that includes the numbers of the reminders to be cancelled (which you can see by using
+            |this command without arguments).
         """.trimToDescription()
 
-        expectedArgs = listOf(TrWord(true, "list"), TrInt(true))
+        expectedArgs = listOf(TrWord(true, "list"), TrWord(true))
         execute { ctx, args ->
             val operation = args.get<String>(0)
-            val reminderIndex = args.get<Int>(1)
+            val idOrRange = args.get<String>(1)
+
+            // This command lets users remove either a single reminder or reminders within a range
+            // of IDs. This here tries to use the input as a range first, then as a single number.
+            val potentialId = idOrRange.toIntOrNull()
+            val range = TrIntRange(true, 0..0).transform(ctx.event, mutableListOf(idOrRange)).run {
+                when {
+                    this == 0..0 && potentialId != null -> potentialId..potentialId
+                    this == 0..0 && operation != "list" -> {
+                        ctx.error("That isn't a valid number or range!")
+                        return@execute
+                    }
+                    else -> this
+                }
+            }
+            val rangeIsMoreThanOne = range.count() > 1
 
             when (operation) {
                 "list" -> {
@@ -270,18 +291,35 @@ class UtilityCommands {
                                     .format(TIME_FORMATTER)
                                     .drop(4)
 
-                                "**#${i + 1}**: `${reminder.reason}` on $time"
+                                "**#${i + 1}**: `${reminder.reason.replace("`", "")}` on $time"
                             }.joinToString("\n")
                         }
                     )
                 }
                 "cancel" -> {
-                    val reminder = reminderCol
+                    val reminders = reminderCol
                         .find(RemindTimer::mention eq ctx.event.author.asMention)
-                        .toList()[reminderIndex - 1]
+                        .toList()
 
-                    reminderCol.deleteOne(reminder.isSame())
-                    ctx.success("I've removed that reminder!")
+                    // Check that the reminder number or range exists.
+                    if (reminders.size + 1 in range) {
+                        ctx.error(
+                            if (rangeIsMoreThanOne) {
+                                "Some of those reminders don't exist!"
+                            } else {
+                                "A reminder with that number doesn't exist!"
+                            }
+                        )
+                        return@execute
+                    }
+
+                    // Can't seem to use [deleteMany] since we need to check indices.
+                    for (index in range) {
+                        reminderCol.deleteOne(reminders[index - 1].isSame())
+                    }
+
+                    val pluralThat = if (rangeIsMoreThanOne) "those reminders" else "that reminder"
+                    ctx.success("I've removed $pluralThat!")
                 }
                 else -> {
                     ctx.error("That isn't a valid operation! Type `..help reminders` for info.")

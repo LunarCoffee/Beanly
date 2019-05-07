@@ -18,13 +18,15 @@ class TrUser(
         if (optional && args.isEmpty()) {
             return default
         }
+
         val input = args.removeAt(0)
+        val mentionMatch = USER_MENTION.matchEntire(input)
 
         return Found(
             when {
                 input.length == 18 -> event.jda.getUserById(input)
                 input.matches(USER_TAG) -> event.jda.getUserByTag(input)
-                input.matches(USER_MENTION) -> event.jda.getUserById(input.drop(2).take(18))
+                mentionMatch != null -> event.jda.getUserById(mentionMatch.groupValues[1])
                 else -> event.jda.getUsersByName(input, true).firstOrNull()
             } ?: return NotFound
         )
@@ -32,6 +34,6 @@ class TrUser(
 
     companion object {
         private val USER_TAG = """.+#\d{4}$""".toRegex()
-        private val USER_MENTION = """<@\d{18}>""".toRegex()
+        private val USER_MENTION = """<@!?(\d{18})>""".toRegex()
     }
 }
