@@ -17,14 +17,10 @@ import framework.core.transformers.TrRest
 import framework.core.transformers.TrTime
 import framework.core.transformers.TrUser
 import framework.core.transformers.utility.Found
-import framework.core.transformers.utility.NotFound
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserSearchResult
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.entities.Member
-import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.exceptions.PermissionException
-import java.lang.IllegalArgumentException
 import java.time.Instant
 import java.util.*
 

@@ -19,6 +19,7 @@ import framework.core.transformers.*
 import framework.core.transformers.utility.Found
 import framework.core.transformers.utility.SplitTime
 import framework.core.transformers.utility.UserSearchResult
+import org.litote.kmongo.eq
 import java.time.Instant
 import java.util.*
 import kotlin.math.pow
@@ -202,7 +203,7 @@ class UtilityCommands {
         val reminderCol = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
 
         description = "Sets a reminder so you don't have to remember things!"
-        aliases = listOf("reminder")
+        aliases = listOf("remindme")
 
         extDescription = """
             |`$name time [reason]`\n
@@ -231,6 +232,61 @@ class UtilityCommands {
             // Save in DB for reload on bot relaunch.
             reminderCol.insertOne(reminderTimer)
             reminderTimer.schedule(ctx.event, reminderCol)
+        }
+    }
+
+    fun reminders() = command("reminders") {
+        val reminderCol = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
+
+        description = "Lets you view and cancel your reminders."
+        aliases = listOf("listreminders")
+
+        extDescription = """
+            |`$name [list|cancel] [id]`\n
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(true, "list"), TrInt(true))
+        execute { ctx, args ->
+            val operation = args.get<String>(0)
+            val reminderIndex = args.get<Int>(1)
+
+            when (operation) {
+                "list" -> {
+                    val list = reminderCol
+                        .find(RemindTimer::mention eq ctx.event.author.asMention)
+                        .toList()
+
+                    if (list.isEmpty()) {
+                        ctx.success("You have no reminders!")
+                        return@execute
+                    }
+
+                    ctx.send(
+                        embed {
+                            title = "${Emoji.ALARM_CLOCK}  Your reminders:"
+                            description = list.mapIndexed { i, reminder ->
+                                val time = SplitTime(reminder.time.time - Date().time)
+                                    .asLocal
+                                    .format(TIME_FORMATTER)
+                                    .drop(4)
+
+                                "**#${i + 1}**: `${reminder.reason}` on $time"
+                            }.joinToString("\n")
+                        }
+                    )
+                }
+                "cancel" -> {
+                    val reminder = reminderCol
+                        .find(RemindTimer::mention eq ctx.event.author.asMention)
+                        .toList()[reminderIndex - 1]
+
+                    reminderCol.deleteOne(reminder.isSame())
+                    ctx.success("I've removed that reminder!")
+                }
+                else -> {
+                    ctx.error("That isn't a valid operation! Type `..help reminders` for info.")
+                }
+            }
         }
     }
 

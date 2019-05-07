@@ -15,7 +15,8 @@ enum class Emoji(private val cp: String) {
     SATELLITE("\uD83D\uDEF0️"),
     INDICATOR_F("\uD83C\uDDEB"),
     HAMMER_AND_WRENCH("\uD83D\uDEE0️"),
-    SCALES("\u2696");
+    SCALES("\u2696"),
+    ALARM_CLOCK("\u23F0");
 
     override fun toString() = cp
 }

@@ -51,10 +51,6 @@ class Dispatcher(
             return
         }
 
-        if (command.deleteSender) {
-            event.message.delete().queue()
-        }
-
         val rawArgs = if (command.noArgParsing) {
             mutableListOf(content.substringAfter(command.name).drop(1))
         } else {
@@ -79,6 +75,11 @@ class Dispatcher(
         if (rawArgs.isNotEmpty()) {
             sendUsage(event, name)
             return
+        }
+
+        // Delete the sender only if the command invocation is correct (and the flag is set).
+        if (command.deleteSender) {
+            event.message.delete().queue()
         }
 
         command.dispatch(CommandContext(event, jda, bot), CommandArguments(commandArgs))

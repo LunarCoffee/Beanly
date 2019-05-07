@@ -15,5 +15,5 @@ val CLIENT = KMongo.createClient().coroutine
 val DB = CLIENT.getDatabase("BeanlyMongoDB")
 val GUILD_OVERRIDES = DB.getCollection<GuildOverrides>("GuildOverrides")
 
-const val REMIND_TIMERS_COL_NAME = "RemindTimers"
+const val REMIND_TIMERS_COL_NAME = "ReminderTimers"
 const val MUTE_TIMERS_COL_NAME = "MuteTimers"
