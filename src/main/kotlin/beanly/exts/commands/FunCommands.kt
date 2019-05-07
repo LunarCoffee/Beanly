@@ -2,19 +2,20 @@
 
 package beanly.exts.commands
 
-import beanly.consts.*
+import beanly.consts.Emoji
 import beanly.exts.commands.utility.DiceRoll
 import beanly.exts.commands.utility.getXkcd
 import beanly.exts.commands.utility.iss.IssLocation
 import beanly.exts.commands.utility.toDiceRoll
 import beanly.trimToDescription
-import framework.core.annotations.CommandGroup
 import framework.api.dsl.command
 import framework.api.dsl.embed
 import framework.api.extensions.await
 import framework.api.extensions.error
 import framework.api.extensions.send
 import framework.api.extensions.success
+import framework.core.annotations.CommandGroup
+import framework.core.silence
 import framework.core.transformers.*
 import java.io.File
 import kotlin.random.Random
@@ -253,7 +254,7 @@ class FunCommands {
         execute { ctx, args ->
             val emoteNames = args.get<List<String>>(0)
             val emotes = emoteNames
-                .map { ctx.jda.getEmotesByName(it, true).firstOrNull()?.asMention }
+                .map { silence { ctx.jda.getEmotesByName(it, true).firstOrNull()?.asMention } }
 
             if (emotes.any { it == null }) {
                 ctx.error("I don't have access to one or more of those emotes!")

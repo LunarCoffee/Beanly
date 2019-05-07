@@ -209,7 +209,7 @@ class OwnerCommands {
         deleteSender = true
 
         extDescription = """
-            |`$name message`\n
+            |`$name title description [color]`\n
             |Sends a message embed to the command user's channel. This is an owner only command as
             |to prevent spam. For more advanced usage, it is advised to use the `ex` command.
         """.trimToDescription()

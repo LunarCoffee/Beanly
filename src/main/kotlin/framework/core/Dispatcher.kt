@@ -25,7 +25,7 @@ class Dispatcher(
     }
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
-        // Keep things sane (PMs and group chats aren't allowed because I'm lazy).
+        // Keep things sane (PMs and group chats aren't allowed for now because I'm lazy).
         if (!event.message.contentRaw.startsWith(prefix)
             || event.author.isBot
             || event.channelType == ChannelType.PRIVATE
@@ -68,13 +68,15 @@ class Dispatcher(
                 it.transform(event, rawArgs)
             } catch (e: Exception) {
                 log.info { "${event.author.name} used command $command with incorrect args." }
+                sendUsage(event, name)
                 return
             }
         }
 
         // Return if not all arguments were used, which means extra arguments were given, which
-        // shouldn't be allowed.
+        // shouldn't be allowed. Ask them to use the help command.
         if (rawArgs.isNotEmpty()) {
+            sendUsage(event, name)
             return
         }
 
@@ -102,6 +104,12 @@ class Dispatcher(
 
         // Drop the first to remove the command name.
         return args.drop(1)
+    }
+
+    private fun sendUsage(event: MessageReceivedEvent, name: String) {
+        GlobalScope.launch {
+            event.channel.error("That's not quite right. Type `..help $name` for more info.")
+        }
     }
 
     companion object {
