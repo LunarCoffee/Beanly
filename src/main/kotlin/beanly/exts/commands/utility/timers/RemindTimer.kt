@@ -22,14 +22,17 @@ class RemindTimer(
     override fun <T : Any> schedule(event: Event, col: CoroutineCollection<T>) {
         Timer().schedule(time) {
             GlobalScope.launch {
-                val channel = event
-                    .jda
-                    .getGuildById(guildId)!!
-                    .getTextChannelById(channelId)!!
-                channel.success("Hey, $mention! Here's your reminder: `$reason`")
-
-                // Delete the timer so it doesn't activate on relaunch again.
-                col.deleteOne(::time eq time)
+                try {
+                    val channel = event
+                        .jda
+                        .getGuildById(guildId)!!
+                        .getTextChannelById(channelId)!!
+                    channel.success("Hey, $mention! Here's your reminder: `$reason`")
+                } finally {
+                    // Delete the timer so it doesn't activate on relaunch again. This must execute
+                    // or the reminder will be stuck forever.
+                    col.deleteOne(::time eq time)
+                }
             }
         }
     }

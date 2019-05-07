@@ -2,6 +2,7 @@ package framework.core
 
 import framework.api.extensions.error
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
@@ -108,7 +109,10 @@ class Dispatcher(
 
     private fun sendUsage(event: MessageReceivedEvent, name: String) {
         GlobalScope.launch {
-            event.channel.error("That's not quite right. Type `..help $name` for more info.")
+            event.channel.error("That's not quite right. Type `..help $name` for more info.") {
+                delay(5000L)
+                it.delete().queue()
+            }
         }
     }
 

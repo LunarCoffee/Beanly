@@ -26,26 +26,31 @@ class MuteTimer(
         Timer().schedule(time) {
             val user = event.jda.getUserById(userId)!!
             val guild = event.jda.getGuildById(guildId)!!
-
-            // Remove muted role and add original role.
-            guild
-                .controller
-                .modifyMemberRoles(
-                    guild.getMember(user)!!,
-                    prevRoles.map { guild.getRoleById(it) },
-                    listOf(guild.getRoleById(mutedRole))
-                )
-                .queue()
-
             GlobalScope.launch {
-                val channel = guild.getTextChannelById(channelId)!!
-                val pm = event.jda.getUserById(userId)!!.openPrivateChannel().await()
+                try {
+                    // Remove muted role and re-add original roles.
+                    guild
+                        .controller
+                        .modifyMemberRoles(
+                            guild.getMember(user)!!,
+                            prevRoles.map { guild.getRoleById(it) },
+                            listOf(guild.getRoleById(mutedRole))
+                        )
+                        .queue()
 
-                channel.success("`${user.asTag}` has been unmuted!")
-                pm.success("You have been unmuted in **${guild.name}**!")
+                    val channel = guild.getTextChannelById(channelId)!!
+                    val pm = event.jda.getUserById(userId)!!.openPrivateChannel().await()
 
-                // Delete the timer so it doesn't activate on relaunch again.
-                col.deleteOne(::time eq time)
+                    channel.success("`${user.asTag}` has been unmuted!")
+                    pm.success("You have been unmuted in **${guild.name}**!")
+
+                } finally {
+                    // Delete the timer so it doesn't activate on relaunch again. This is in a
+                    // finally block because the bot may lose permissions between the time the mute
+                    // command is used and when the timer to unmute runs out, causing a
+                    // [HierarchyException] or similar.
+                    col.deleteOne(::time eq time)
+                }
             }
         }
     }
