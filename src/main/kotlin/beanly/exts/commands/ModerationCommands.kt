@@ -60,6 +60,9 @@ class ModerationCommands {
                         .controller
                         .modifyMemberRoles(offender, listOf(mutedRole), oldRoles)
                         .queue()
+                } catch (e: IllegalArgumentException) {
+                    ctx.error("I can't remove managed roles!")
+                    return@muteAction
                 } catch (e: PermissionException) {
                     ctx.error("I don't have enough permissions to do that!")
                     return@muteAction
@@ -153,7 +156,10 @@ class ModerationCommands {
 
         extDescription = """
             |`$name [user]`\n
-            |
+            |Without arguments, this command lists all muted members of the current server, along
+            |with the remaining time they will be muted for (without a manual unmute). When `user`
+            |is provided, this command lists details about their mute, including the reason, the
+            |remaining time, and their previous roles.
         """.trimToDescription()
 
         expectedArgs = listOf(TrUser(true))

@@ -13,8 +13,7 @@ abstract class Paginator {
 
     abstract val pages: MutableList<Message>
     abstract var currentPage: Int
-    val totalPages
-        get() = pages.size
+    val totalPages get() = pages.size
 
     abstract val closeTimer: Timer
     abstract var closeTask: TimerTask
@@ -32,11 +31,19 @@ abstract class Paginator {
     }
 
     suspend fun send(channel: MessageChannel) {
+        if (totalPages == 1) {
+            channel.sendMessage(formatMessage()).await()
+            return
+        }
+
         message = channel.sendMessage(formatMessage()).await()
         active[message.id] = this
 
         // Add buttons.
         for (button in PaginatorButtons.values()) {
+            if (totalPages < 6 && button in JUMP_BUTTONS) {
+                continue
+            }
             message.addReaction(button.cp).queue()
         }
 
@@ -62,6 +69,7 @@ abstract class Paginator {
     companion object {
         // Length of time that a paginator must go unused in order for it to close itself.
         const val CLOSE_TIMEOUT = 120_000L
+        val JUMP_BUTTONS = arrayOf(PaginatorButtons.JUMP_LEFT, PaginatorButtons.JUMP_RIGHT)
 
         // Maps message IDs to their paginators.
         val active = mutableMapOf<String, Paginator>()

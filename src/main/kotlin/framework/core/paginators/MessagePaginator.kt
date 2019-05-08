@@ -16,7 +16,13 @@ open class MessagePaginator(override val creator: User) : Paginator() {
 
     override fun formatMessage(): Message {
         return MessageBuilder()
-            .setContent("[${currentPage + 1}/$totalPages]\n${pages[currentPage].contentRaw}")
+            .setContent(
+                if (totalPages == 1) {
+                    pages[currentPage].contentRaw
+                } else {
+                    "[${currentPage + 1}/$totalPages]\n${pages[currentPage].contentRaw}"
+                }
+            )
             .build()
     }
 }

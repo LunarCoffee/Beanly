@@ -11,6 +11,7 @@ import beanly.gmtToEst
 import beanly.trimToDescription
 import framework.api.dsl.command
 import framework.api.dsl.embed
+import framework.api.dsl.embedPaginator
 import framework.api.extensions.error
 import framework.api.extensions.send
 import framework.api.extensions.success
@@ -236,7 +237,7 @@ class UtilityCommands {
         }
     }
 
-    fun reminders() = command("reminders") {
+    fun remindlist() = command("remindlist") {
         val reminderCol = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
 
         description = "Lets you view and cancel your reminders."
@@ -282,17 +283,25 @@ class UtilityCommands {
                     return@execute
                 }
 
-                ctx.send(
-                    embed {
-                        title = "${Emoji.ALARM_CLOCK}  Your reminders:"
-                        description = list.mapIndexed { i, reminder ->
-                            val time = SplitTime(reminder.time.time - Date().time)
-                                .asLocal
-                                .format(TIME_FORMATTER)
-                                .drop(4)
+                val reminderPages = list.mapIndexed { i, reminder ->
+                    val time = SplitTime(reminder.time.time - Date().time)
+                        .asLocal
+                        .format(TIME_FORMATTER)
+                        .drop(4)
 
-                            "**#${i + 1}**: `${reminder.reason.replace("`", "")}` on $time"
-                        }.joinToString("\n")
+                    "**#${i + 1}**: `${reminder.reason.replace("`", "")}` on $time"
+                }.chunked(16).map { it.joinToString("\n") }
+
+                ctx.send(
+                    embedPaginator(ctx.event.author) {
+                        for (reminders in reminderPages) {
+                            page(
+                                embed {
+                                    title = "${Emoji.ALARM_CLOCK}  Your reminders:"
+                                    description = reminders
+                                }
+                            )
+                        }
                     }
                 )
             } else if (operation == "cancel") {
@@ -381,7 +390,8 @@ class UtilityCommands {
             | - `name`: denotes that `name` is required\n
             | - `name1|name2`: denotes that either `name1` or `name2` is valid\n
             | - `name...`: denotes that many of `name` can be specified\n
-            |If an argument is wrapped with square brackets, it is optional.
+            |If an argument is wrapped with square brackets, it is optional. You may wrap an
+            |argument with double quotes "like this" to treat it as one instead of multiple.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true), TrWord(true))

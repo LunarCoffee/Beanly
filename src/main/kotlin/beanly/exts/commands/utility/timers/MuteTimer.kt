@@ -60,7 +60,7 @@ class MuteTimer(
                             title = "${Emoji.HAMMER_AND_WRENCH}  You were automatically unmuted!"
                             description = """
                                 |**Server name**: ${guild.name}
-                                |**Unmuter**: ${(event as? MessageReceivedEvent)!!.author.asTag}
+                                |**Muter**: ${(event as? MessageReceivedEvent)!!.author.asTag}
                             """.trimMargin()
                         }
                     )

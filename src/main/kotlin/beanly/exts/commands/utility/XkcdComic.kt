@@ -13,7 +13,7 @@ class XkcdComic(
     private val month: String,
     private val year: String
 ) {
-    fun getDate() = "${day.padStart(2, '0')}/${month.padStart(2, '0')}/$year"
+    val date get() = "${day.padStart(2, '0')}/${month.padStart(2, '0')}/$year"
 
     companion object {
         val COMIC_404 = XkcdComic(

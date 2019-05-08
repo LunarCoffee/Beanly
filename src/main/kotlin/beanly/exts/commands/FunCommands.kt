@@ -4,20 +4,21 @@ package beanly.exts.commands
 
 import beanly.consts.Emoji
 import beanly.exts.commands.utility.DiceRoll
-import beanly.exts.commands.utility.getXkcd
-import beanly.exts.commands.utility.iss.IssLocation
 import beanly.exts.commands.utility.toDiceRoll
 import beanly.trimToDescription
 import framework.api.dsl.command
 import framework.api.dsl.embed
+import framework.api.dsl.embedPaginator
 import framework.api.extensions.await
 import framework.api.extensions.error
 import framework.api.extensions.send
 import framework.api.extensions.success
 import framework.core.annotations.CommandGroup
 import framework.core.silence
-import framework.core.transformers.*
-import java.io.File
+import framework.core.transformers.TrGreedy
+import framework.core.transformers.TrInt
+import framework.core.transformers.TrRest
+import framework.core.transformers.TrSplit
 import kotlin.random.Random
 
 @CommandGroup("Fun")
@@ -29,14 +30,15 @@ class FunCommands {
         extDescription = """
             |`$name [times]`\n
             |If an argument is provided, this command flips `times` coins, displaying all of the
-            |flip results. If no argument is provided, this command will flip one coin.
+            |flip results. If no argument is provided, this command will flip one coin. I can flip
+            |anywhere from 1 to 10000 coins.
         """.trimToDescription()
 
         expectedArgs = listOf(TrInt(true, 1))
         execute { ctx, args ->
             val times = args.get<Int>(0)
 
-            if (times !in 1..292) {
+            if (times !in 1..10000) {
                 ctx.error("I can't flip that number of coins!")
                 return@execute
             }
@@ -54,9 +56,15 @@ class FunCommands {
             }
 
             ctx.send(
-                embed {
-                    title = "${Emoji.RADIO_BUTTON}  You flipped $result!"
-                    description = flips.toString()
+                embedPaginator(ctx.event.author) {
+                    for (results in flips.chunked(100)) {
+                        page(
+                            embed {
+                                title = "${Emoji.RADIO_BUTTON}  You flipped $result!"
+                                description = results.toString()
+                            }
+                        )
+                    }
                 }
             )
         }
@@ -79,6 +87,10 @@ class FunCommands {
         expectedArgs = listOf(TrGreedy(String::toDiceRoll, DiceRoll(1, 6, 0)))
         execute { ctx, args ->
             val diceRolls = args.get<List<DiceRoll>>(0)
+            if (diceRolls.size > 100) {
+                ctx.error("I can't roll that many specifiers!")
+                return@execute
+            }
 
             // Check for constraints with helpful feedback.
             for (roll in diceRolls) {
@@ -106,16 +118,24 @@ class FunCommands {
             // instead of "You rolled a..." if only one die was rolled. Makes it a bit more human.
             val totalOfOrEmpty = if (diceRolls.size > 1) "total of " else ""
 
+            // Make each roll specifier's results look like "**2d8-2**: [3, 6] -2" or so.
+            val resultPages = results.zip(diceRolls).map { (res, roll) ->
+                val modifierSign = if (roll.mod <= 0) "" else "+"
+                val modifier = if (roll.mod != 0) roll.mod.toString() else ""
+
+                val modifierAndSign = modifierSign + modifier
+                "**${roll.times}d${roll.sides}$modifierAndSign**: $res $modifierAndSign"
+            }.chunked(16).map { it.joinToString("\n") }
+
             ctx.send(
-                embed {
-                    title = "${Emoji.GAME_DIE}  You rolled a $totalOfOrEmpty$total!"
-
-                    description = results.zip(diceRolls).joinToString("\n") { (res, roll) ->
-                        val modifierSign = if (roll.mod <= 0) "" else "+"
-                        val modifier = if (roll.mod != 0) roll.mod.toString() else ""
-
-                        val modifierAndSign = modifierSign + modifier
-                        "**${roll.times}d${roll.sides}$modifierAndSign**: $res $modifierAndSign"
+                embedPaginator(ctx.event.author) {
+                    for (page in resultPages) {
+                        page(
+                            embed {
+                                title = "${Emoji.GAME_DIE}  You rolled a $totalOfOrEmpty$total!"
+                                description = page
+                            }
+                        )
                     }
                 }
             )
@@ -128,11 +148,11 @@ class FunCommands {
 
         extDescription = """
             |`$name options...`\n
-            |Picks a value from `options`, which is a list of choices separated by `|` surrounded
-            |by spaces (so you can use the pipe in an option for things like `Wolfram|Alpha`).
+            |Picks a value from `options`, which is a list of choices. To have an option name with
+            |a space, wrap the name in quotes "like this." This also applies to other commands.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrSplit(" | "))
+        expectedArgs = listOf(TrSplit())
         execute { ctx, args ->
             val options = args.get<List<String>>(0)
 
@@ -269,88 +289,6 @@ class FunCommands {
             }
 
             ctx.success("Here $pluralOrNotEmotes: ${emotes.joinToString(" ")}")
-        }
-    }
-
-    fun xkcd() = command("xkcd") {
-        description = "Gets an xkcd comic!"
-        aliases = listOf("getxkcd")
-
-        extDescription = """
-            |`$name [number|-r]`\n
-            |Gets and displays information about the xkcd comic number `number`. If `number` is not
-            |specified, the latest comic is used. If the `-r` flag is set, a random comic will be
-            |used. Of course, this command also displays the comic itself, not just information.
-        """.trimToDescription()
-
-        expectedArgs = listOf(TrWord(true))
-        execute { ctx, args ->
-            val whichOrRandom = args.get<String>(0)
-            val latestNumber = getXkcd(null).num.toInt()
-
-            val which = when (whichOrRandom) {
-                "" -> latestNumber
-                "-r" -> Random.nextInt(latestNumber) + 1
-                else -> whichOrRandom.toIntOrNull()
-            }
-
-            if (which == null || which !in 1..latestNumber) {
-                ctx.error("I can't get the comic with that number!")
-                return@execute
-            }
-
-            val comic = getXkcd(which)
-            ctx.send(
-                embed {
-                    comic.run {
-                        this@embed.title = "${Emoji.FRAMED_PICTURE}  XKCD Comic #**$num**:"
-                        description = """
-                            |**Title**: $title
-                            |**Alt text**: $alt
-                            |**Release date**: ${getDate()}
-                        """.trimMargin()
-
-                        image {
-                            url = this@run.img
-                        }
-                    }
-                }
-            )
-        }
-    }
-
-    fun iss() = command("iss") {
-        description = "Shows the current location of the ISS."
-        aliases = listOf("issinfo", "spacestation")
-
-        extDescription = """
-            |`$name`\n
-            |Shows details about the location and other info of the International Space Station. A
-            |map with a point where the ISS currently is will also be displayed. The information is
-            |fetched using the `Where the ISS at?` API.
-        """.trimToDescription()
-
-        execute { ctx, _ ->
-            val location = IssLocation().apply {
-                getStatistics()
-                saveImage()
-            }
-
-            location.run {
-                ctx.sendMessage(
-                    embed {
-                        statistics.run {
-                            title = "${Emoji.SATELLITE}  Info on the ISS:"
-                            description = """
-                                |**Longitude**: ${longitudeStr()}
-                                |**Latitude**: ${latitudeStr()}
-                                |**Altitude**: $altitude km
-                                |**Velocity**: $velocity km/h
-                            """.trimMargin()
-                        }
-                    }
-                ).addFile(File(image)).await()
-            }
         }
     }
 }

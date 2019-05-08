@@ -1,5 +1,6 @@
 package beanly.exts.commands.utility.iss
 
+import beanly.consts.BEANLY_CONFIG
 import beanly.consts.GSON
 import io.github.rybalkinsd.kohttp.dsl.async.asyncHttpGet
 import io.github.rybalkinsd.kohttp.ext.url
@@ -28,7 +29,7 @@ class IssLocation {
         val rawImage = asyncHttpGet {
             url("https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/$args")
             param {
-                "access_token" to mapboxToken
+                "access_token" to BEANLY_CONFIG.mapboxToken
             }
         }.await().body()!!.byteStream()
 
@@ -60,9 +61,5 @@ class IssLocation {
             }
         }
         ImageIO.write(withDotLayer, "png", file)
-    }
-
-    companion object {
-        private val mapboxToken = File("src/main/resources/mapbox/mapbox_token.txt").readText()
     }
 }

@@ -13,8 +13,7 @@ class Command(override var name: String) : BaseCommand {
     override var aliases = listOf<String>()
     override var expectedArgs = emptyList<Transformer<out Any?>>()
 
-    override val names
-        get() = aliases + name
+    override val names get() = aliases + name
 
     override var deleteSender = false
     override var ownerOnly = false

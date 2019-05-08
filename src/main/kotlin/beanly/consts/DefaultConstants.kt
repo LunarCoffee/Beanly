@@ -1,10 +1,16 @@
 package beanly.consts
 
+import beanly.exts.commands.utility.BeanlyConfig
 import beanly.exts.commands.utility.GuildOverrides
 import com.google.gson.Gson
 import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.reactivestreams.KMongo
+import org.yaml.snakeyaml.Yaml
+import java.io.File
 import java.time.format.DateTimeFormatter
+
+const val BEANLY_CONFIG_PATH = "src/main/resources/beanly_config.yaml"
+val BEANLY_CONFIG = Yaml().loadAs(File(BEANLY_CONFIG_PATH).readText(), BeanlyConfig::class.java)!!
 
 const val EMBED_COLOR = 0xFFECA8
 

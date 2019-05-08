@@ -15,9 +15,13 @@ open class EmbedPaginator(override val creator: User) : Paginator() {
     override var currentPage = 0
 
     override fun formatMessage(): Message {
-        return MessageBuilder()
-            .setContent("[${currentPage + 1}/$totalPages]")
-            .setEmbed(pages[currentPage].embeds[0])
-            .build()
+        return if (totalPages == 1) {
+            MessageBuilder().setEmbed(pages[currentPage].embeds[0]).build()
+        } else {
+            MessageBuilder()
+                .setContent("[${currentPage + 1}/$totalPages]")
+                .setEmbed(pages[currentPage].embeds[0])
+                .build()
+        }
     }
 }
