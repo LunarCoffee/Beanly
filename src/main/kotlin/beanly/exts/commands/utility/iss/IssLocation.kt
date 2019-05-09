@@ -40,7 +40,7 @@ class IssLocation {
 
     private fun drawMarkerAndLabel(file: File) {
         val image = ImageIO.read(file)
-        val withDotLayer = BufferedImage(760, 760, BufferedImage.TYPE_INT_ARGB).apply {
+        val dotLayer = BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB).apply {
             createGraphics().apply {
                 // Make the text look nice.
                 setRenderingHint(SunHints.KEY_ANTIALIASING, SunHints.VALUE_ANTIALIAS_ON)
@@ -60,6 +60,10 @@ class IssLocation {
                 dispose()
             }
         }
-        ImageIO.write(withDotLayer, "png", file)
+        ImageIO.write(dotLayer, "png", file)
+    }
+
+    companion object {
+        private const val IMAGE_SIZE = 760
     }
 }

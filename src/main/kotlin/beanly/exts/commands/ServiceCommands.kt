@@ -100,16 +100,14 @@ class ServiceCommands {
 
     fun osu() = command("osu") {
         description = "Does lots of osu! related stuff!"
-        aliases = listOf("ous", "osu!", "ous!")
+        aliases = listOf("ous")
 
         extDescription = """
             |`$name action username|userid|beatmapid [mode]`\n
             |This command does osu! related stuff depending on the provided `action`. If it is
             |`user`, it gets info for for the user with the provided `username` or `userid`. If
             |`mode` is provided, it should be `normal`, `taiko`, `catch`, or `mania`. If `action`
-            |is `beatmap`, it gets info of the beatmap with the provided id of `beatmapid`. Lastly,
-            |if `action` is `recent`, it gets the latest plays of the provided player, taking
-            |`mode` into account (if provided).
+            |is `beatmap`, it gets info of the beatmap with the provided id of `beatmapid`.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(), TrWord(), TrWord(true))
@@ -130,8 +128,6 @@ class ServiceCommands {
             when (action) {
                 "user" -> OsuUser(userOrBeatmap, mode).sendDetails(ctx)
                 "beatmap" -> OsuBeatmap(userOrBeatmap, mode).sendDetails(ctx)
-                "recent" -> {
-                } // TODO:
                 else -> {
                     ctx.error("That operation is invalid!")
                 }

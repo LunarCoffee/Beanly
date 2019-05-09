@@ -4,6 +4,7 @@ package beanly.exts.commands
 
 import beanly.consts.Emoji
 import beanly.exts.commands.utility.DiceRoll
+import beanly.exts.commands.utility.rplace.RPlaceCanvas
 import beanly.exts.commands.utility.toDiceRoll
 import beanly.trimToDescription
 import framework.api.dsl.command
@@ -15,10 +16,9 @@ import framework.api.extensions.send
 import framework.api.extensions.success
 import framework.core.annotations.CommandGroup
 import framework.core.silence
-import framework.core.transformers.TrGreedy
-import framework.core.transformers.TrInt
-import framework.core.transformers.TrRest
-import framework.core.transformers.TrSplit
+import framework.core.transformers.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 @CommandGroup("Fun")
@@ -289,6 +289,34 @@ class FunCommands {
             }
 
             ctx.success("Here $pluralOrNotEmotes: ${emotes.joinToString(" ")}")
+        }
+    }
+
+    fun rplace() = command("rplace") {
+        val canvas = RPlaceCanvas().apply { GlobalScope.launch { load() } }
+
+        description = "An open canvas similar to r/place."
+        aliases = listOf("redditplace")
+
+        extDescription = """
+            |`$name [view|colors|put] [x] [y] [color]`\n
+            |A small r/place in Discord! The first argument should be an action to perform. If it
+            |is `view`, I will send you a picture of the canvas as of now. It if is `colors`, I'll
+            |send you all the available colors. If it is `put`, you should specify three more
+            |arguments: the `x` coordinate, `y` coordinate, and `color` you want your pixel to be.
+            |Like on a cartesian plane, the x axis goes horizontally and the y axis goes
+            |vertically. Note that you can only place a pixel every 15 minutes, and that the canvas
+            |is shared across all the servers I'm in.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(true, "view"), TrInt(true), TrInt(true), TrWord(true))
+        execute { ctx, args ->
+            when (args.get<String>(0)) {
+                "view" -> canvas.sendCanvas(ctx)
+                "colors" -> canvas.sendColors(ctx)
+                "put" -> canvas.putPixelContext(ctx, args)
+                else -> ctx.error("That operation is invalid!")
+            }
         }
     }
 }

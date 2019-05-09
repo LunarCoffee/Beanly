@@ -2,10 +2,7 @@
 
 package beanly.exts.commands
 
-import beanly.consts.DB
-import beanly.consts.Emoji
-import beanly.consts.REMIND_TIMERS_COL_NAME
-import beanly.consts.TIME_FORMATTER
+import beanly.consts.*
 import beanly.exts.commands.utility.timers.RemindTimer
 import beanly.gmtToEst
 import beanly.trimToDescription
@@ -25,6 +22,7 @@ import java.time.Instant
 import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.reflect.jvm.jvmName
 
 @CommandGroup("Utility")
 class UtilityCommands {
@@ -197,7 +195,7 @@ class UtilityCommands {
     }
 
     fun remind() = command("remind") {
-        val reminderCol = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
+        val reminderCol = DB.getCollection<RemindTimer>(COL_NAMES[RemindTimer::class.simpleName]!!)
 
         description = "Sets a reminder so you don't have to remember things!"
         aliases = listOf("remindme")
@@ -234,7 +232,7 @@ class UtilityCommands {
     }
 
     fun remindlist() = command("remindlist") {
-        val reminderCol = DB.getCollection<RemindTimer>(REMIND_TIMERS_COL_NAME)
+        val reminderCol = DB.getCollection<RemindTimer>(COL_NAMES[RemindTimer::class.simpleName]!!)
 
         description = "Lets you view and cancel your reminders."
         aliases = listOf("remindmanage")

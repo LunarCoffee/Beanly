@@ -22,7 +22,8 @@ enum class Emoji(private val cp: String) {
     DRUM("\uD83E\uDD41"),
     PINEAPPLE("\uD83C\uDF4D"),
     MUSICAL_KEYBOARD("\uD83C\uDFB9"),
-    WORLD_MAP("\uD83D\uDDFA️");
+    WORLD_MAP("\uD83D\uDDFA️"),
+    WHITE_SQUARE_BUTTON("\uD83D\uDD33");
 
     override fun toString() = cp
 }

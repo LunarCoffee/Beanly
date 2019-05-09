@@ -1,8 +1,8 @@
 package beanly.exts.commands
 
+import beanly.consts.COL_NAMES
 import beanly.consts.DB
 import beanly.consts.Emoji
-import beanly.consts.MUTE_TIMERS_COL_NAME
 import beanly.exts.commands.utility.banAction
 import beanly.exts.commands.utility.muteAction
 import beanly.exts.commands.utility.muteInfo
@@ -29,11 +29,12 @@ import net.dv8tion.jda.api.exceptions.PermissionException
 import org.litote.kmongo.eq
 import java.time.Instant
 import java.util.*
+import kotlin.reflect.jvm.jvmName
 
 @CommandGroup("Moderation")
 class ModerationCommands {
     fun mute() = command("mute") {
-        val muteCol = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
+        val muteCol = DB.getCollection<MuteTimer>(COL_NAMES[MuteTimer::class.simpleName]!!)
 
         description = "Mutes a member for a specified amount of time."
         aliases = listOf("silence")
@@ -99,7 +100,7 @@ class ModerationCommands {
     }
 
     fun unmute() = command("unmute") {
-        val muteCol = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
+        val muteCol = DB.getCollection<MuteTimer>(COL_NAMES[MuteTimer::class.simpleName]!!)
 
         description = "Unmutes a currently muted member."
         aliases = listOf("unsilence")
@@ -149,7 +150,7 @@ class ModerationCommands {
     }
 
     fun mutelist() = command("mutelist") {
-        val muteCol = DB.getCollection<MuteTimer>(MUTE_TIMERS_COL_NAME)
+        val muteCol = DB.getCollection<MuteTimer>(COL_NAMES[MuteTimer::class.simpleName]!!)
 
         description = "Shows the muted members on the current server."
         aliases = listOf("silenced")
