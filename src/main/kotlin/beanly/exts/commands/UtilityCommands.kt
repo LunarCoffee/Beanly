@@ -63,9 +63,7 @@ class UtilityCommands {
                             |**Mention**: $asMention
                         """.trimMargin()
 
-                        thumbnail {
-                            url = avatarUrl ?: defaultAvatarUrl
-                        }
+                        thumbnail { url = avatarUrl ?: defaultAvatarUrl }
                     }
                 }
             )
@@ -125,9 +123,7 @@ class UtilityCommands {
                             |**Roles**: $userRoles
                         """.trimMargin()
 
-                        thumbnail {
-                            url = user.avatarUrl ?: user.defaultAvatarUrl
-                        }
+                        thumbnail { url = user.avatarUrl ?: user.defaultAvatarUrl }
                     }
                 }
             )
@@ -422,9 +418,7 @@ class UtilityCommands {
                             }
                         }
 
-                        footer {
-                            text = "Type '..help help' for more info."
-                        }
+                        footer { text = "Type '..help help' for more info." }
                     } else if (command != null) {
                         // The first line of the extended description should always be the command
                         // usage (i.e. `help [command name] [-v]`).
@@ -445,9 +439,7 @@ class UtilityCommands {
                             description += "\n**Extended description**: ${command.extDescription}"
                         } else {
                             description += "\n**Usage**: $usage"
-                            footer {
-                                text = "Type '..help ${command.name} -v' for more info."
-                            }
+                            footer { text = "Type '..help ${command.name} -v' for more info." }
                         }
                     }
                 }

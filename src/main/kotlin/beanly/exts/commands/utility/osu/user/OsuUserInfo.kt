@@ -1,4 +1,4 @@
-package beanly.exts.commands.utility.osu
+package beanly.exts.commands.utility.osu.user
 
 import framework.core.transformers.utility.SplitTime
 import java.time.LocalDateTime
@@ -9,16 +9,17 @@ class OsuUserInfo(
     val username: String,
     val globalRank: String,
     val countryRank: String,
+    val country: String,
     val ssh: String,
     val ss: String,
     val sh: String,
     val s: String,
     val a: String,
-    private val ppDecimal: String,
+    private val ppRaw: String,
     private val joinTimeRaw: String,
     private val playTimeSeconds: String
 ) {
-    val pp get() = ppDecimal.toDouble().roundToInt()
+    val pp get() = ppRaw.toDouble().roundToInt()
     val joinTime get() = LocalDateTime.parse(joinTimeRaw.replace(" ", "T"))!!
     val playTime get() = SplitTime(playTimeSeconds.toLong() * 1_000)
 }

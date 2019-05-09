@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.EmbedType
 import net.dv8tion.jda.api.entities.MessageEmbed
 
 class EmbedDsl {
+    var url: String = ""
     var title: String = ""
     var description: String = ""
     var color: Int = EMBED_COLOR
@@ -83,7 +84,7 @@ class EmbedDsl {
         // Use constructor instead of builder to bypass bounds checking to allow for simpler
         // exception handling in higher level APIs.
         return MessageEmbed(
-            null,
+            url,
             title,
             description,
             EmbedType.RICH,

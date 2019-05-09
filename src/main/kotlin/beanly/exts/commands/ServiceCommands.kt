@@ -1,10 +1,10 @@
 package beanly.exts.commands
 
 import beanly.consts.Emoji
-import beanly.consts.TIME_FORMATTER
 import beanly.exts.commands.utility.getXkcd
 import beanly.exts.commands.utility.iss.IssLocation
-import beanly.exts.commands.utility.osu.OsuUser
+import beanly.exts.commands.utility.osu.beatmap.OsuBeatmap
+import beanly.exts.commands.utility.osu.user.OsuUser
 import beanly.trimToDescription
 import framework.api.dsl.command
 import framework.api.dsl.embed
@@ -56,9 +56,7 @@ class ServiceCommands {
                             |**Release date**: $date
                         """.trimMargin()
 
-                        image {
-                            url = this@run.img
-                        }
+                        image { url = this@run.img }
                     }
                 }
             )
@@ -109,14 +107,16 @@ class ServiceCommands {
             |This command does osu! related stuff depending on the provided `action`. If it is
             |`user`, it gets info for for the user with the provided `username` or `userid`. If
             |`mode` is provided, it should be `normal`, `taiko`, `catch`, or `mania`. If `action`
-            |is `beatmap`, it gets info of the beatmap with the provided id of `beatmapid`.
+            |is `beatmap`, it gets info of the beatmap with the provided id of `beatmapid`. Lastly,
+            |if `action` is `recent`, it gets the latest plays of the provided player, taking
+            |`mode` into account (if provided).
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(), TrWord(), TrWord(true))
         execute { ctx, args ->
             val action = args.get<String>(0)
             val userOrBeatmap = args.get<String>(1)
-            val userMode = when (args.get<String>(2).toLowerCase()) {
+            val mode = when (args.get<String>(2).toLowerCase()) {
                 "", "normal" -> 0
                 "taiko" -> 1
                 "catch" -> 2
@@ -128,27 +128,10 @@ class ServiceCommands {
             }
 
             when (action) {
-                "user" -> {
-                    val user = OsuUser(userOrBeatmap, userMode).apply { getUser() }
-                    ctx.send(
-                        embed {
-                            user.info.run {
-                                title = "${user.modeEmoji()}  Info on player **$username**:"
-                                description = """
-                                    |**User ID**: $userId
-                                    |**Global rank**: $globalRank
-                                    |**Country rank**: $countryRank
-                                    |**PP**: $pp
-                                    |**SS+/SS/S+/S/A**: $ssh/$ss/$sh/$s/$a
-                                    |**Join time**: ${joinTime.format(TIME_FORMATTER).drop(4)}
-                                    |**Play time**: $playTime
-                                """.trimMargin()
-                            }
-                        }
-                    )
-                }
-                "beatmap" -> {
-                }
+                "user" -> OsuUser(userOrBeatmap, mode).sendDetails(ctx)
+                "beatmap" -> OsuBeatmap(userOrBeatmap, mode).sendDetails(ctx)
+                "recent" -> {
+                } // TODO:
                 else -> {
                     ctx.error("That operation is invalid!")
                 }
