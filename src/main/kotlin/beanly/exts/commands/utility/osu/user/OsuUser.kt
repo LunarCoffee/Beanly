@@ -41,8 +41,8 @@ class OsuUser(private val usernameOrId: String, override val mode: Int) : OsuHas
     }
 
     private suspend fun getUserInfo(ctx: CommandContext): OsuUserInfo? {
-        return try {
-            withContext(Dispatchers.Default) {
+        return withContext(Dispatchers.Default) {
+            try {
                 OSU_USER_GSON.fromJson(
                     httpPost {
                         url("https://osu.ppy.sh/api/get_user")
@@ -53,11 +53,11 @@ class OsuUser(private val usernameOrId: String, override val mode: Int) : OsuHas
                         }
                     }.body()!!.charStream().readText().drop(1).dropLast(1),
                     OsuUserInfo::class.java
-                )
+                )!!
+            } catch (e: NullPointerException) {
+                ctx.error("I can't find a player with that name!")
+                null
             }
-        } catch (e: IllegalStateException) {
-            ctx.error("I can't find a player with that name!")
-            return null
         }
     }
 
