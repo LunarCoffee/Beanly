@@ -56,7 +56,8 @@ class RPlaceCanvas {
         dbCanvas.copyInto(canvas)
     }
 
-    suspend fun sendCanvas(ctx: CommandContext) {
+    suspend fun sendCanvas(ctx: CommandContext, grid: Boolean = true) {
+        createAndSaveImage(grid)
         ctx.sendMessage(
             embed {
                 title = "${Emoji.WHITE_SQUARE_BUTTON}  Current canvas stats:"
@@ -143,7 +144,7 @@ class RPlaceCanvas {
         // Create a cooldown of 15 minutes.
         val newTimer = RPlaceTimer(
             Date.from(
-                LocalDateTime.now().plusMinutes(15).atZone(ZoneId.systemDefault()).toInstant()
+                LocalDateTime.now().plusMinutes(5).atZone(ZoneId.systemDefault()).toInstant()
             ),
             user.id
         )
@@ -153,7 +154,7 @@ class RPlaceCanvas {
         return true
     }
 
-    private fun createAndSaveImage() {
+    private fun createAndSaveImage(grid: Boolean = false) {
         val file = File(IMAGE_PATH)
         val image = BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB).apply {
             createGraphics().apply {
@@ -169,7 +170,7 @@ class RPlaceCanvas {
                 for (coord in 1..CANVAS_SIZE) {
                     // Draw x and y axes labels.
                     drawString(coord.toString(), (if (coord < 10) 40 else 35) + coord * 30, 40)
-                    drawString(coord.toString(), 20, 55 + coord * 30)
+                    drawString(coord.toString(), 20, 52 + coord * 30)
                 }
 
                 // Draw x and y axes, respectively.
@@ -179,7 +180,12 @@ class RPlaceCanvas {
                 for (xC in 0 until CANVAS_SIZE) {
                     for (yC in 0 until CANVAS_SIZE) {
                         paint = canvas[yC][xC]
-                        fillRect(60 + xC * 30, 63 + yC * 30, 30, 30)
+                        fillRect(60 + xC * 30, 60 + yC * 30, 30, 30)
+
+                        if (grid) {
+                            paint = Color.decode("#CCCCCC")
+                            drawRect(60 + xC * 30, 60 + yC * 30, 30, 30)
+                        }
                     }
                 }
                 dispose()

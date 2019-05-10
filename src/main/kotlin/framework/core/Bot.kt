@@ -6,6 +6,7 @@ import framework.core.annotations.CommandGroup
 import framework.core.annotations.ListenerGroup
 import framework.core.paginators.PaginationReactionListener
 import mu.KotlinLogging
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.yaml.snakeyaml.Yaml
@@ -14,14 +15,8 @@ import java.io.File
 open class Bot(configPath: String) {
     val config = Yaml().loadAs(File(configPath).readText(), BotConfig::class.java)!!
 
-    val jda = JDABuilder()
-        .setToken(config.token)
-        .build()
-
-    // This is safe because [Dispatcher] does not use the instance of [Bot] being constructed in
-    // its constructor, but only when it will actually be fully initialized.
-    @Suppress("LeakingThis")
-    private val dispatcher = Dispatcher(jda, this, config.prefix)
+    val jda: JDA
+    private val dispatcher: Dispatcher
 
     private val cl = ClassLoader.getSystemClassLoader()
 
@@ -77,6 +72,15 @@ open class Bot(configPath: String) {
     val listenerNames get() = listeners.map { it.javaClass.name.substringAfterLast(".") }
 
     init {
+        jda = JDABuilder()
+            .setToken(config.token)
+            .build()
+
+        // This is safe because [Dispatcher] does not use the instance of [Bot] being constructed in
+        // its constructor, but only when it will actually be fully initialized.
+        @Suppress("LeakingThis")
+        dispatcher = Dispatcher(jda, this, config.prefix)
+
         // Register the reaction listener that handles paginator page changing.
         listeners += PaginationReactionListener()
 
