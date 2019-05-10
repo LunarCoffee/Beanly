@@ -301,19 +301,20 @@ class FunCommands {
         extDescription = """
             |`$name [raw|colors|put] [x] [y] [color]`\n
             |A small r/place in Discord! The first argument should be an action to perform. If it
-            |is `view`, I will send you a picture of the canvas as of now. It if is `colors`, I'll
+            |is empty, I will send you a picture of the canvas as of now. It if is `colors`, I'll
             |send you all the available colors. If it is `put`, you should specify three more
             |arguments: the `x` coordinate, `y` coordinate, and `color` you want your pixel to be.
             |Like on a cartesian plane, the x axis goes horizontally and the y axis goes
-            |vertically. Note that you can only place a pixel every 5 minutes, and that the canvas
-            |is shared across all the servers I'm in.
+            |vertically. Finally, if the action is `raw`, I'll send you only the image of the
+            |canvas. Note that you can only place a pixel every 5 minutes, and that the canvas is
+            |shared across all the servers I'm in.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true), TrInt(true), TrInt(true), TrWord(true))
         execute { ctx, args ->
             when (args.get<String>(0)) {
                 "" -> canvas.sendCanvas(ctx)
-                "nogrid" -> canvas.sendCanvas(ctx,false)
+                "raw" -> canvas.sendCanvas(ctx, false)
                 "colors" -> canvas.sendColors(ctx)
                 "put" -> canvas.putPixelContext(ctx, args)
                 else -> ctx.error("That operation is invalid!")

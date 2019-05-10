@@ -15,10 +15,12 @@ class OsuUserInfo(
     val sh: String,
     val s: String,
     val a: String,
+    private val accuracyRaw: String,
     private val ppRaw: String,
     private val joinTimeRaw: String,
     private val playTimeSeconds: String
 ) {
+    val accuracy get() = "%.2f".format(accuracyRaw.toDouble())
     val pp get() = ppRaw.toDouble().roundToInt()
     val joinTime get() = LocalDateTime.parse(joinTimeRaw.replace(" ", "T"))!!
     val playTime get() = SplitTime(playTimeSeconds.toLong() * 1_000)

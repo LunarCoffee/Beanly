@@ -27,6 +27,7 @@ class OsuUser(private val usernameOrId: String, override val mode: Int) : OsuHas
                         |**User ID**: $userId
                         |**Global rank**: #$globalRank
                         |**Country rank**: #$countryRank in $country
+                        |**Accuracy**: $accuracy%
                         |**PP**: $pp
                         |**SS+/SS/S+/S/A**: $ssh/$ss/$sh/$s/$a
                         |**Join time**: ${joinTime.format(TIME_FORMATTER).drop(4)}

@@ -32,7 +32,7 @@ dependencies {
     implementation "com.google.code.gson:gson:2.8.5"
     implementation "io.github.rybalkinsd:kohttp:0.8.0"
 
-    implementation "net.dv8tion:JDA:4.ALPHA.0_80"
+    implementation "net.dv8tion:JDA:4.ALPHA.0_85"
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.1"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.2.1"

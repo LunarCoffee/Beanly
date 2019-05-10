@@ -16,6 +16,8 @@ import org.litote.kmongo.eq
 import sun.awt.SunHints
 import java.awt.Color
 import java.awt.Font
+import java.awt.Graphics2D
+import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.File
 import java.time.LocalDateTime
@@ -125,7 +127,7 @@ class RPlaceCanvas {
         val timer = cooldownCol.findOne(RPlaceTimer::userId eq user.id)
         if (timer != null) {
             val timeRemaining = SplitTime(timer.time.time - System.currentTimeMillis())
-            ctx.error("You can't place another pixel for $timeRemaining!")
+            ctx.error("You can't place another pixel for `$timeRemaining`!")
             return false
         }
 
@@ -162,36 +164,65 @@ class RPlaceCanvas {
                 setRenderingHint(SunHints.KEY_ANTIALIASING, SunHints.VALUE_ANTIALIAS_ON)
                 setRenderingHint(SunHints.KEY_STROKE_CONTROL, SunHints.VALUE_STROKE_PURE)
 
+                // Fill background with white.
                 fillRect(0, 0, IMAGE_SIZE, IMAGE_SIZE)
 
-                paint = Color.BLACK
-                font = Font(Font.SANS_SERIF, Font.PLAIN, 16)
-
-                for (coord in 1..CANVAS_SIZE) {
-                    // Draw x and y axes labels.
-                    drawString(coord.toString(), (if (coord < 10) 40 else 35) + coord * 30, 40)
-                    drawString(coord.toString(), 20, 52 + coord * 30)
+                if (grid) {
+                    drawWithGrid()
+                } else {
+                    drawWithoutGrid()
                 }
-
-                // Draw x and y axes, respectively.
-                drawLine(55, 55, IMAGE_SIZE - 25, 55)
-                drawLine(55, 55, 55, IMAGE_SIZE - 25)
-
-                for (xC in 0 until CANVAS_SIZE) {
-                    for (yC in 0 until CANVAS_SIZE) {
-                        paint = canvas[yC][xC]
-                        fillRect(60 + xC * 30, 60 + yC * 30, 30, 30)
-
-                        if (grid) {
-                            paint = Color.decode("#CCCCCC")
-                            drawRect(60 + xC * 30, 60 + yC * 30, 30, 30)
-                        }
-                    }
-                }
-                dispose()
             }
         }
         ImageIO.write(image, "png", file)
+    }
+
+    private fun Graphics2D.drawWithGrid() {
+        paint = Color.BLACK
+        font = Font(Font.SANS_SERIF, Font.PLAIN, 16)
+
+        for (coord in 1..CANVAS_SIZE) {
+            // Draw x and y axes coordinate labels, respectively.
+            drawString(coord.toString(), (if (coord < 10) 40 else 35) + coord * 30, 40)
+            drawString(coord.toString(), 20, 52 + coord * 30)
+        }
+
+        // Draw x and y axes, respectively.
+        drawLine(55, 55, IMAGE_SIZE - 25, 55)
+        drawLine(55, 55, 55, IMAGE_SIZE - 25)
+
+        for (xC in 0 until CANVAS_SIZE) {
+            for (yC in 0 until CANVAS_SIZE) {
+                paint = canvas[yC][xC]
+
+                // Draw the individual pixel (30x30).
+                fillRect(60 + xC * 30, 60 + yC * 30, 30, 30)
+
+                // Draw the grid. This method is quite inefficient compared to drawing lines. Maybe
+                // do that instead?
+                paint = Color.decode("#CCCCCC")
+                drawRect(60 + xC * 30, 60 + yC * 30, 30, 30)
+            }
+        }
+        dispose()
+    }
+
+    private fun Graphics2D.drawWithoutGrid() {
+        val pixelSize = IMAGE_SIZE.toDouble() / CANVAS_SIZE
+
+        for (xC in 0 until CANVAS_SIZE) {
+            for (yC in 0 until CANVAS_SIZE) {
+                paint = canvas[yC][xC]
+                fill(
+                    Rectangle2D.Double(
+                        xC * pixelSize,
+                        yC * pixelSize,
+                        pixelSize + 0.5,
+                        pixelSize + 0.5
+                    )
+                )
+            }
+        }
     }
 
     private suspend fun storeInfoUpdates(id: Long) {
@@ -212,6 +243,7 @@ class RPlaceCanvas {
 
         private val canvasInfoCol = DB.getCollection<RPlaceCanvasInfo>("RPlaceCanvasInfo0")
         private val canvasCol = DB.getCollection<Color>("RPlaceCanvas0")
+
         private val cooldownCol = DB.getCollection<RPlaceTimer>(
             COL_NAMES[RPlaceTimer::class.simpleName]!!
         )

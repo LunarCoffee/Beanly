@@ -76,8 +76,8 @@ open class Bot(configPath: String) {
             .setToken(config.token)
             .build()
 
-        // This is safe because [Dispatcher] does not use the instance of [Bot] being constructed in
-        // its constructor, but only when it will actually be fully initialized.
+        // This is safe because [Dispatcher] does not use the instance of [Bot] being constructed
+        // in its constructor, but only when it will actually be fully initialized.
         @Suppress("LeakingThis")
         dispatcher = Dispatcher(jda, this, config.prefix)
 

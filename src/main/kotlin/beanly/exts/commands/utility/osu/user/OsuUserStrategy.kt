@@ -11,6 +11,7 @@ class OsuUserStrategy : FieldNamingStrategy {
             "globalRank" -> "pp_rank"
             "countryRank" -> "pp_country_rank"
             "ppRaw" -> "pp_raw"
+            "accuracyRaw" -> "accuracy"
             "playTimeSeconds" -> "total_seconds_played"
             "ssh", "ss", "sh", "s", "a" -> "count_rank_${field.name}"
             else -> field.name

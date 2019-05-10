@@ -29,7 +29,6 @@ import net.dv8tion.jda.api.exceptions.PermissionException
 import org.litote.kmongo.eq
 import java.time.Instant
 import java.util.*
-import kotlin.reflect.jvm.jvmName
 
 @CommandGroup("Moderation")
 class ModerationCommands {
@@ -37,7 +36,7 @@ class ModerationCommands {
         val muteCol = DB.getCollection<MuteTimer>(COL_NAMES[MuteTimer::class.simpleName]!!)
 
         description = "Mutes a member for a specified amount of time."
-        aliases = listOf("silence")
+        aliases = listOf("silence", "softban")
 
         extDescription = """
             |`$name user time [reason]`\n
@@ -103,7 +102,7 @@ class ModerationCommands {
         val muteCol = DB.getCollection<MuteTimer>(COL_NAMES[MuteTimer::class.simpleName]!!)
 
         description = "Unmutes a currently muted member."
-        aliases = listOf("unsilence")
+        aliases = listOf("unsilence", "unsoftban")
 
         extDescription = """
             |`$name user`\n
@@ -153,7 +152,7 @@ class ModerationCommands {
         val muteCol = DB.getCollection<MuteTimer>(COL_NAMES[MuteTimer::class.simpleName]!!)
 
         description = "Shows the muted members on the current server."
-        aliases = listOf("silenced")
+        aliases = listOf("silencelist", "softbanlist")
 
         extDescription = """
             |`$name [user]`\n
@@ -394,6 +393,36 @@ class ModerationCommands {
             } catch (e: PermissionException) {
                 ctx.error("I don't have enough permissions to do that!")
             }
+        }
+    }
+
+    fun slowmode() = command("slowmode") {
+        description = "Sets the current channel's slowmode."
+        aliases = listOf("cooldown")
+
+        extDescription = """
+            |`$name time`
+            |When setting the slowmode cooldown of a channel in the Discord client's channel
+            |settings, the only options available are at fixed lengths of time. This command lets
+            |you change it to any arbitrary time between none to six hours. The `time` argument
+            |should look something like `2m 30s`, `1h`, or `0s`, to give some examples.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrTime())
+        execute { ctx, args ->
+            val slowmode = args.get<SplitTime>(0)
+            val slowmodeSeconds = slowmode.totalMs.toInt() / 1_000
+
+            if (slowmodeSeconds !in 0..21_600) {
+                ctx.error("I can't set this channel's slowmode to that amount of time!")
+                return@execute
+            }
+
+            val channel = ctx.guild.getTextChannelById(ctx.event.channel.id) ?: return@execute
+            channel.manager.setSlowmode(slowmodeSeconds).queue()
+
+            val slowmodeRepr = if (slowmode.totalMs > 0) "`$slowmode`" else "disabled"
+            ctx.success("This channel's slowmode time is now $slowmodeRepr!")
         }
     }
 }
