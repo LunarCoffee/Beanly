@@ -204,9 +204,8 @@ class UtilityCommands {
             |`$name time [reason]`\n
             |This command takes a time string that looks something like `3h 40m` or `1m 30s` or
             |`2d 4h 32m 58s`, and optionally, a reason to remind you of. After the amount of time
-            |specified in `time`, I will ping you in the channel you send the command in and remind
-            |you of what you told me to. Also, if your reminder doesn't fire and you get promoted
-            |to a customer or your house burns down, it isn't my fault.
+            |specified in `time`, I should ping you in the channel you send the command in and
+            |remind you of what you told me.
         """.trimToDescription()
 
         expectedArgs = listOf(TrTime(), TrRest(true, "(no reason)"))
@@ -240,11 +239,11 @@ class UtilityCommands {
         extDescription = """
             |`$name [list|cancel] [id|range]`\n
             |This command can list all of your active reminders or cancel one or more of said
-            |reminders. Using the command without arguments will list active reminders, and using
-            |it with two will cancel one. When cancelling, the first argument needs to be `cancel`
-            |and the second needs to be either a number or inclusive range (like `1-3` or `4-5`)
-            |that includes the numbers of the reminders to be cancelled (which you can see by using
-            |this command without arguments).
+            |reminders. Using the command without arguments will list active reminders with their,
+            |and using it with two will cancel one.\n
+            |When cancelling, the first argument needs to be `cancel` and the second needs to be
+            |either a number or inclusive range (like `1-3` or `4-5`) that includes the numbers of
+            |the reminders to be cancelled.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true, "list"), TrWord(true))

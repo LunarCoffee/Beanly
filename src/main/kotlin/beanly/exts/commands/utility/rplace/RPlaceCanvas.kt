@@ -58,8 +58,16 @@ class RPlaceCanvas {
         dbCanvas.copyInto(canvas)
     }
 
-    suspend fun sendCanvas(ctx: CommandContext, grid: Boolean = true) {
-        createAndSaveImage(grid)
+    suspend fun sendCanvas(ctx: CommandContext, grid: Boolean? = true) {
+        createAndSaveImage(grid ?: false)
+
+        // When [grid] is null, we send only the image without a grid, no embed.
+        if (grid == null) {
+            createAndSaveImage(false)
+            ctx.sendFile(File(IMAGE_PATH)).queue()
+            return
+        }
+
         ctx.sendMessage(
             embed {
                 title = "${Emoji.WHITE_SQUARE_BUTTON}  Current canvas stats:"

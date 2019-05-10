@@ -22,12 +22,16 @@ class SplitTime(val days: Long, val hours: Long, val minutes: Long, val seconds:
         val mtoMinute = if (minutes != 1L) "s" else ""
         val mtoSecond = if (seconds != 1L) "s" else ""
 
-        return arrayOf(
-            if (days > 0) "$days day$mtoDay" else "",
-            if (hours > 0) "$hours hour$mtoHour" else "",
-            if (minutes > 0) "$minutes minute$mtoMinute" else "",
-            if (seconds > 0) "$seconds second$mtoSecond" else ""
-        ).filter(String::isNotEmpty).joinToString()
+        return if (totalMs == 0L) {
+            "0 seconds"
+        } else {
+            arrayOf(
+                if (days > 0) "$days day$mtoDay" else "",
+                if (hours > 0) "$hours hour$mtoHour" else "",
+                if (minutes > 0) "$minutes minute$mtoMinute" else "",
+                if (seconds > 0) "$seconds second$mtoSecond" else ""
+            ).filter(String::isNotEmpty).joinToString()
+        }
     }
 
     companion object {

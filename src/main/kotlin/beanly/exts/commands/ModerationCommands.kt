@@ -68,7 +68,7 @@ class ModerationCommands {
                     return@muteAction
                 }
 
-                ctx.success("`${offender.user.asTag}` has been muted!")
+                ctx.success("`${offender.user.asTag}` has been muted for `$time`!")
                 pmChannel.send(
                     embed {
                         title = "${Emoji.HAMMER_AND_WRENCH}  You were muted!"
@@ -396,9 +396,9 @@ class ModerationCommands {
         }
     }
 
-    fun slowmode() = command("slowmode") {
+    fun slowmode() = command("slow") {
         description = "Sets the current channel's slowmode."
-        aliases = listOf("cooldown")
+        aliases = listOf("cooldown", "slowmode")
 
         extDescription = """
             |`$name time`
@@ -422,7 +422,7 @@ class ModerationCommands {
             channel.manager.setSlowmode(slowmodeSeconds).queue()
 
             val slowmodeRepr = if (slowmode.totalMs > 0) "`$slowmode`" else "disabled"
-            ctx.success("This channel's slowmode time is now $slowmodeRepr!")
+            ctx.success("This channel's slowmode time is now `$slowmodeRepr`!")
         }
     }
 }

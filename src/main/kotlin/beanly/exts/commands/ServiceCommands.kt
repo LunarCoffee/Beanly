@@ -104,10 +104,12 @@ class ServiceCommands {
 
         extDescription = """
             |`$name action username|userid|beatmapid [mode]`\n
-            |This command does osu! related stuff depending on the provided `action`. If it is
-            |`user`, it gets info for for the user with the provided `username` or `userid`. If
-            |`mode` is provided, it should be `normal`, `taiko`, `catch`, or `mania`. If `action`
-            |is `beatmap`, it gets info of the beatmap with the provided id of `beatmapid`.
+            |This command does osu! related stuff depending on the provided `action`.\n
+            |If it is `user`, it gets info for for the user with the provided `username` or
+            |`userid`.\n
+            |If `mode` is provided, it should be `normal`, `taiko`, `catch`, or `mania`.\n
+            |If `action` is `beatmap`, it gets info of the beatmap with the provided id of
+            |`beatmapid`.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(), TrWord(), TrWord(true))
