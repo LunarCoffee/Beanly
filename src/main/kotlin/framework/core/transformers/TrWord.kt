@@ -8,10 +8,6 @@ class TrWord(
 ) : Transformer<String> {
 
     override fun transform(event: MessageReceivedEvent, args: MutableList<String>): String {
-        return if (optional && args.isEmpty()) {
-            default
-        } else {
-            args.removeAt(0)
-        }
+        return if (optional && args.isEmpty()) default else args.removeAt(0)
     }
 }

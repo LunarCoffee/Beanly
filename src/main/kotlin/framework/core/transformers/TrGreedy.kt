@@ -29,10 +29,6 @@ class TrGreedy<T>(
         }
         args.removeAll(args.take(numTaken))
 
-        return if (result.isEmpty()) {
-            default
-        } else {
-            result
-        }
+        return if (result.isEmpty()) default else result
     }
 }

@@ -35,9 +35,7 @@ open class Bot(configPath: String) {
         .associate { (methods, group) ->
             val annotation = group::class.annotations.find { it is CommandGroup } as CommandGroup
             annotation to methods.map {
-                (it.invoke(group) as BaseCommand).apply {
-                    groupName = annotation.name
-                }
+                (it.invoke(group) as BaseCommand).apply { groupName = annotation.name }
             }
         }
         .also {
@@ -61,9 +59,7 @@ open class Bot(configPath: String) {
         .map { c ->
             c.constructors.find {
                 // Make sure the constructor takes one argument of type [Bot].
-                it.parameters.run {
-                    size == 1 && get(0).type.name == Bot::class.java.name
-                }
+                it.parameters.run { size == 1 && get(0).type.name == Bot::class.java.name }
             }!!.newInstance(this) as ListenerAdapter
         }
 

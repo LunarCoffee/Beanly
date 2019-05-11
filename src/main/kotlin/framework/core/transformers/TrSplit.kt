@@ -11,8 +11,6 @@ class TrSplit(
     override val optional = true
 
     override fun transform(event: MessageReceivedEvent, args: MutableList<String>): List<String> {
-        return args.joinToString(" ").split(separator).also {
-            args.clear()
-        }
+        return args.joinToString(" ").split(separator).also { args.clear() }
     }
 }

@@ -21,9 +21,7 @@ class MentionListeners(private val bot: Bot) : ListenerAdapter() {
 
         // Help the user that couldn't read the activity text by sending them the prefix. :P
         if (content == "<@${bot.jda.selfUser.id}>") {
-            GlobalScope.launch {
-                event.channel.success("My prefix here is `..`!")
-            }
+            GlobalScope.launch { event.channel.success("My prefix here is `..`!") }
         }
     }
 }

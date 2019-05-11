@@ -47,9 +47,7 @@ class EmbedDsl {
 
     fun author(init: AuthorDsl.() -> Unit) {
         val authorDsl = AuthorDsl().apply(init)
-        author = authorDsl.run {
-            MessageEmbed.AuthorInfo(name, url, iconUrl, proxyIconUrl)
-        }
+        author = authorDsl.run { MessageEmbed.AuthorInfo(name, url, iconUrl, proxyIconUrl) }
     }
 
     inner class AuthorDsl {
@@ -61,16 +59,12 @@ class EmbedDsl {
 
     fun thumbnail(init: ImageOrThumbnailDsl.() -> Unit) {
         val thumbnailDsl = ImageOrThumbnailDsl().apply(init)
-        thumbnail = thumbnailDsl.run {
-            MessageEmbed.Thumbnail(url, proxyUrl, width, height)
-        }
+        thumbnail = thumbnailDsl.run { MessageEmbed.Thumbnail(url, proxyUrl, width, height) }
     }
 
     fun image(init: ImageOrThumbnailDsl.() -> Unit) {
         val imageDsl = ImageOrThumbnailDsl().apply(init)
-        image = imageDsl.run {
-            MessageEmbed.ImageInfo(url, proxyUrl, width, height)
-        }
+        image = imageDsl.run { MessageEmbed.ImageInfo(url, proxyUrl, width, height) }
     }
 
     inner class ImageOrThumbnailDsl {

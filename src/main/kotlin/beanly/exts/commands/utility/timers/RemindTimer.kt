@@ -7,7 +7,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.events.Event
-import org.bson.conversions.Bson
 import org.litote.kmongo.and
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.eq
@@ -48,11 +47,5 @@ class RemindTimer(
         }
     }
 
-    fun isSame(): Bson {
-        return and(
-            ::mention eq mention,
-            ::time eq time,
-            ::reason eq reason
-        )
-    }
+    fun isSame() = and(::mention eq mention, ::time eq time, ::reason eq reason)
 }

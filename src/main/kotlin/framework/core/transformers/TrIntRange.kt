@@ -26,11 +26,7 @@ class TrIntRange(
 
     // Returns if the argument is optional, throws an exception otherwise.
     private fun returnOrThrow(): IntRange {
-        return if (optional) {
-            default
-        } else {
-            throw IllegalArgumentException()
-        }
+        return if (optional) default else throw IllegalArgumentException()
     }
 
     companion object {

@@ -26,9 +26,7 @@ class Command(override var name: String) : BaseCommand {
     }
 
     override fun dispatch(ctx: CommandContext, args: CommandArguments) {
-        GlobalScope.launch {
-            execute(ctx, args)
-        }
+        GlobalScope.launch { execute(ctx, args) }
     }
 
     override fun toString() = "Command(name=$name, desc=$description, aliases=$aliases)"
