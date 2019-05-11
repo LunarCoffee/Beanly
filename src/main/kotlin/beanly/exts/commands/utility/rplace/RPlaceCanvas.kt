@@ -109,7 +109,10 @@ class RPlaceCanvas {
             "pink" -> Color.PINK
             "magenta" -> Color.MAGENTA
             "" -> null
-            else -> Color.YELLOW
+            else -> {
+                ctx.error("That color isn't a valid color! Type `..rplace colors` for more info.")
+                return
+            }
         }
 
         // Ensure all arguments were given (they're all optional due to the <view> operation).

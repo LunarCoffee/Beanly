@@ -27,7 +27,7 @@ class CommandSuggestionListeners(private val bot: Bot) : ListenerAdapter() {
         }
 
         val name = event.message.contentRaw.substringAfter(bot.config.prefix).substringBefore(" ")
-        if (name !in bot.commands.map { it.name }) {
+        if (name !in bot.commands.flatMap { it.names }) {
             suggestCommandNames(event, name)
         }
     }

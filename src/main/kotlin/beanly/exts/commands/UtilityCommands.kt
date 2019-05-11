@@ -396,7 +396,7 @@ class UtilityCommands {
                 ctx.error("I can't calculate the factorial of that number!")
                 return@execute
             }
-            val result = factorialCalculator.factorial(number).toString().chunked(1_938)
+            val result = factorialCalculator.factorial(number).toString().chunked(1_827)
 
             ctx.send(
                 messagePaginator(ctx.event.author) {
