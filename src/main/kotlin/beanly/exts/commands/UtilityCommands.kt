@@ -2,13 +2,18 @@
 
 package beanly.exts.commands
 
-import beanly.consts.*
+import beanly.consts.COL_NAMES
+import beanly.consts.DB
+import beanly.consts.Emoji
+import beanly.consts.TIME_FORMATTER
+import beanly.exts.commands.utility.FastFactorialCalculator
 import beanly.exts.commands.utility.timers.RemindTimer
 import beanly.gmtToEst
 import beanly.trimToDescription
 import framework.api.dsl.command
 import framework.api.dsl.embed
 import framework.api.dsl.embedPaginator
+import framework.api.dsl.messagePaginator
 import framework.api.extensions.error
 import framework.api.extensions.send
 import framework.api.extensions.success
@@ -22,7 +27,6 @@ import java.time.Instant
 import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlin.reflect.jvm.jvmName
 
 @CommandGroup("Utility")
 class UtilityCommands {
@@ -369,6 +373,38 @@ class UtilityCommands {
             val charsOrWords = if (byWords) "words" else "characters"
 
             ctx.success("Your text is `$length` $charsOrWords long.")
+        }
+    }
+
+    fun fact() = command("fact") {
+        val factorialCalculator = FastFactorialCalculator()
+
+        description = "Calculates the factorial of a given number."
+        aliases = listOf("factorial")
+
+        extDescription = """
+            |`$name number`\n
+            |A lot of online calculators stop giving you factorials in whole numbers after quite an
+            |early point, usually around `15!` or so. Unlike them, I'll calculate factorials up to
+            |100000 and happily provide them in all their glory.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrInt())
+        execute { ctx, args ->
+            val number = args.get<Int>(0).toLong()
+            if (number !in 0..100_000) {
+                ctx.error("I can't calculate the factorial of that number!")
+                return@execute
+            }
+            val result = factorialCalculator.factorial(number).toString().chunked(1_938)
+
+            ctx.send(
+                messagePaginator(ctx.event.author) {
+                    for (chunk in result) {
+                        page("```$chunk```")
+                    }
+                }
+            )
         }
     }
 
