@@ -32,6 +32,7 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
             return
         }
 
+        // The name of each snapshot file is formatted like "nameOfSnapshot=timeCreatedMs.png."
         val filename = "$cleanName=${System.currentTimeMillis()}.png"
         val file = File("$SNAPSHOT_PATH/$filename")
 
@@ -44,6 +45,7 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
         // First save the image without a grid.
         canvas.createAndSaveImage()
 
+        // Scale the image down to save memory.
         val scaledImage = toBufferedImage(
             withContext(Dispatchers.IO) {
                 ImageIO.read(File(RPlaceCanvas.IMAGE_PATH))
@@ -61,6 +63,9 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
 
         try {
             withContext(Dispatchers.IO) {
+                // Simply deleting the image will do. We also don't need to check for the return of
+                // [delete] since it only returns [false] when the file does not exist, which is
+                // handled by the try/catch.
                 Files
                     .newDirectoryStream(Paths.get(SNAPSHOT_PATH), "$name=*.png")
                     .first()
@@ -79,6 +84,7 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
 
         withContext(Dispatchers.IO) {
             if (name.isEmpty()) {
+                // Make a string of all of the snapshots' names and creation times.
                 val snapshots = File(SNAPSHOT_PATH).walk().drop(1).joinToString("\n") {
                     val snapshotName = it.name.substringBefore("=")
                     val time = getSnapshotTime(it.name).replace(" at ", "` at `")
@@ -134,6 +140,7 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
         }
     }
 
+    // Extracts snapshot creation time from the image's filename.
     private fun getSnapshotTime(filename: String): String {
         val timeMs = filename
             .substringAfterLast("=")
