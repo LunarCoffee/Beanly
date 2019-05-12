@@ -293,18 +293,23 @@ class FunCommands {
         aliases = listOf("redditplace")
 
         extDescription = """
-            |`$name [nogrid|raw|colors|put] [x] [y] [color]`\n
+            |`$name [nogrid|raw|colors|put|snap|dsnap|gallery] [x] [y] [color|snapshotname]`\n
             |A small r/place in Discord! The first argument should be an action to perform.\n
             |If it is empty, I will send you a picture of the canvas as of now.\n
             |If the action is `nogrid`, I'll send you an image of the canvas without the grid, as
             |well the stats embed.\n
             |If the action is `raw`, I'll send you only the image of the canvas.\n
             |It if is `colors`, I'll send you all the available colors you can put pixels with.\n
-            |Finally, if it is `put`, you should specify three more arguments: the `x` coordinate,
+            |If it is `put`, you should specify three more arguments: the `x` coordinate,
             |`y` coordinate, and `color` you want your pixel to be. Like on a cartesian plane, the
             |x axis goes horizontally and the y axis goes vertically.\n
-            |Note that you can only place a pixel every 5 minutes, and
-            |that the canvas is shared across all the servers I'm in.
+            |If it is `snap`, I will save the current canvas as an image with the name given by
+            |`snapshotname`, which can be accessed using the `gallery` action.\n
+            |If it is `dsnap`, I will delete the snapshot with the name `snapshotname`.
+            |Finally, if the action is `gallery`, I will list all previously taken snapshots of the
+            |canvas, with their names and the times at which they were taken.\n
+            |Note that you can only place a pixel every 5 minutes, and that the canvas is shared
+            |across all the servers I'm in.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true), TrInt(true), TrInt(true), TrWord(true))
@@ -316,6 +321,9 @@ class FunCommands {
                     "raw" -> sendCanvas(ctx, null)
                     "colors" -> sendColors(ctx)
                     "put" -> putPixelContext(ctx, args)
+                    "snap" -> takeSnapshot(ctx, args)
+                    "dsnap" -> deleteSnapshot(ctx, args)
+                    "gallery" -> sendGallery(ctx, args)
                     else -> ctx.error("That operation is invalid!")
                 }
             }

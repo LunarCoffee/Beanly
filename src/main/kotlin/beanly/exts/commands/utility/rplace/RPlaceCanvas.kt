@@ -11,7 +11,9 @@ import framework.api.extensions.send
 import framework.core.CommandArguments
 import framework.core.CommandContext
 import framework.core.transformers.utility.SplitTime
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.litote.kmongo.eq
 import sun.awt.SunHints
 import java.awt.Color
@@ -20,6 +22,8 @@ import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
@@ -29,6 +33,7 @@ import javax.imageio.ImageIO
 
 class RPlaceCanvas {
     private val canvas = Array(CANVAS_SIZE) { Array(CANVAS_SIZE) { Color.WHITE } }
+    private val gallery = RPlaceGallery(this)
 
     private val canvasInfo = runBlocking {
         canvasInfoCol.run {
@@ -128,6 +133,39 @@ class RPlaceCanvas {
         }
     }
 
+    suspend fun takeSnapshot(ctx: CommandContext, args: CommandArguments) {
+        gallery.takeSnapshot(ctx, args)
+    }
+
+    suspend fun deleteSnapshot(ctx: CommandContext, args: CommandArguments) {
+        gallery.deleteSnapshot(ctx, args)
+    }
+
+    suspend fun sendGallery(ctx: CommandContext, args: CommandArguments) {
+        gallery.sendGallery(ctx, args)
+    }
+
+    fun createAndSaveImage(grid: Boolean = false) {
+        val file = File(IMAGE_PATH)
+        val image = BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB).apply {
+            createGraphics().apply {
+                // Make the text look nice.
+                setRenderingHint(SunHints.KEY_ANTIALIASING, SunHints.VALUE_ANTIALIAS_ON)
+                setRenderingHint(SunHints.KEY_STROKE_CONTROL, SunHints.VALUE_STROKE_PURE)
+
+                // Fill background with white.
+                fillRect(0, 0, IMAGE_SIZE, IMAGE_SIZE)
+
+                if (grid) {
+                    drawWithGrid()
+                } else {
+                    drawWithoutGrid()
+                }
+            }
+        }
+        ImageIO.write(image, "png", file)
+    }
+
     private suspend fun drawPixel(ctx: CommandContext, x: Int, y: Int, color: Color): Boolean {
         if (x !in 0 until CANVAS_SIZE || y !in 0 until CANVAS_SIZE) {
             ctx.error("Those coordinates are off the canvas!")
@@ -165,27 +203,6 @@ class RPlaceCanvas {
         newTimer.schedule(ctx.event, cooldownCol)
 
         return true
-    }
-
-    private fun createAndSaveImage(grid: Boolean = false) {
-        val file = File(IMAGE_PATH)
-        val image = BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB).apply {
-            createGraphics().apply {
-                // Make the text look nice.
-                setRenderingHint(SunHints.KEY_ANTIALIASING, SunHints.VALUE_ANTIALIAS_ON)
-                setRenderingHint(SunHints.KEY_STROKE_CONTROL, SunHints.VALUE_STROKE_PURE)
-
-                // Fill background with white.
-                fillRect(0, 0, IMAGE_SIZE, IMAGE_SIZE)
-
-                if (grid) {
-                    drawWithGrid()
-                } else {
-                    drawWithoutGrid()
-                }
-            }
-        }
-        ImageIO.write(image, "png", file)
     }
 
     private fun Graphics2D.drawWithGrid() {
@@ -248,7 +265,8 @@ class RPlaceCanvas {
     }
 
     companion object {
-        private const val IMAGE_PATH = "src/main/resources/rplace/rplace_canvas.png"
+        const val IMAGE_PATH = "src/main/resources/rplace/rplace_canvas.png"
+
         private const val CANVAS_SIZE = 40
         private const val IMAGE_SIZE = 30 * CANVAS_SIZE + 90
 
