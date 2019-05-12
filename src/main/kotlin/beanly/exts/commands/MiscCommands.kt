@@ -116,8 +116,8 @@ class MiscCommands {
     }
 
     fun git() = command("git") {
-        description = "Gets my GitLab repo URL."
-        aliases = listOf("repo", "gitlab")
+        description = "Gets my GitHub repo URL."
+        aliases = listOf("repo", "github")
 
         extDescription = """
             |`$name`\n
@@ -126,7 +126,7 @@ class MiscCommands {
         """.trimToDescription()
 
         execute { ctx, _ ->
-            ctx.success("<https://gitlab.com/LunarCoffee/beanly>")
+            ctx.success("<https://github.com/LunarCoffee/Beanly>")
         }
     }
 
