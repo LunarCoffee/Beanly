@@ -241,13 +241,17 @@ class UtilityCommands {
         aliases = listOf("remindmanage")
 
         extDescription = """
-            |`$name [list|cancel] [id|range]`\n
-            |This command can list all of your active reminders or cancel one or more of said
-            |reminders. Using the command without arguments will list active reminders with their,
-            |and using it with two will cancel one.\n
-            |When cancelling, the first argument needs to be `cancel` and the second needs to be
-            |either a number or inclusive range (like `1-3` or `4-5`) that includes the numbers of
-            |the reminders to be cancelled.
+            |`$name [cancel] [id|range]`\n
+            |This command is for managing reminders made by the `remind` command. You can view and
+            |cancel any of your reminders here.
+            |&{Viewing reminders:}
+            |Viewing your active reminders is easy. Just use the command without arguments (i.e.
+            |`..remindlist`), and I will list out all of your active reminders. Each entry will
+            |have the reminder's reason and the time it will be fired at.
+            |&{Cancelling reminders:}
+            |Cancelling reminders is also easy. The first argument must be `cancel`, and the second
+            |argument can be either a number or range of numbers (i.e. `1-5` or `4-6`). I will
+            |cancel the reminders with the IDs you specify (either `id` or `range`).
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true, "list"), TrWord(true))
@@ -409,13 +413,16 @@ class UtilityCommands {
     }
 
     fun help() = command("help") {
+        val singleField = """&\{([^{}]+)}""".toRegex()
+
         description = "Lists all commands or shows help for a specific command."
         extDescription = """
             |`$name [command name] [-v]`\n
             |With a command name, this command gets its aliases, expected usage, expected
             |arguments, and optionally (if the `-v` flag is set) an extended description (which
             |you're reading right now). Otherwise, this command simply lists available commands.
-            |The syntax of the expected usage is as follows:\n
+            |&{Reading command usages:}
+            |The syntax of the expected command usage is as follows:\n
             | - `name`: denotes that `name` is required\n
             | - `name1|name2`: denotes that either `name1` or `name2` is valid\n
             | - `name...`: denotes that many of `name` can be specified\n
@@ -466,13 +473,34 @@ class UtilityCommands {
                         description = """
                             |**Aliases**: $aliases
                             |**Description**: ${command.description}
+                            |**Usage**: $usage
                         """.trimMargin()
 
-                        if (flags == "-v") {
-                            description += "\n**Extended description**: ${command.extDescription}"
-                        } else {
-                            description += "\n**Usage**: $usage"
+                        if (flags != "-v") {
                             footer { text = "Type '..help ${command.name} -v' for more info." }
+                        } else {
+                            // The "Extended description" group is always first.
+                            val extDescription = " &{Extended description:}" +
+                                    command.extDescription.substringAfter("\n")
+                            val fieldContents = extDescription
+                                .split(singleField)
+                                .drop(1)
+                                .iterator()
+
+                            // Turn "&{name}" into a field with name [name] and the content of the
+                            // part below the tag (until the next field tag).
+                            val matcher = singleField.toPattern().matcher(extDescription)
+                            val descriptionFields = mutableListOf<Pair<String, String>>()
+                            while (matcher.find()) {
+                                descriptionFields += Pair(matcher.group(1), fieldContents.next())
+                            }
+
+                            for ((fName, fContent) in descriptionFields) {
+                                field {
+                                    name = fName
+                                    content = fContent
+                                }
+                            }
                         }
                     }
                 }

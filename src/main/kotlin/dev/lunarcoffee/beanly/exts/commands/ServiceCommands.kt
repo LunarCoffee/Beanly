@@ -105,11 +105,17 @@ class ServiceCommands {
         extDescription = """
             |`$name action username|userid|beatmapid [mode]`\n
             |This command does osu! related stuff depending on the provided `action`.\n
-            |If it is `user`, it gets info for for the user with the provided `username` or
-            |`userid`.\n
-            |If `mode` is provided, it should be `normal`, `taiko`, `catch`, or `mania`.\n
-            |If `action` is `beatmap`, it gets info of the beatmap with the provided id of
-            |`beatmapid`.
+            |&{Getting user info:}
+            |If the action is `user`, I will get info for for the user with the provided `username`
+            |or `userid`. This info includes things like their rank, accuracy, PP, and more.
+            |&{Getting beatmap info:}
+            |If the action is `beatmap`, I will get info of the beatmap with the provided id of
+            |`beatmapid`. This info includes the creator, star rating, BPM, AR, drain, and more.
+            |&{Selecting a gamemode:}
+            |With the `mode` argument, you can specify what mode to get info about. It should be
+            |`normal`, `taiko`, `catch`, or `mania`. If the action is `user`, I will get the user's
+            |stats in your selected gamemode, and if the action is `beatmap`, I will get the
+            |beatmaps of that gamemode for the set you specified.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(), TrWord(), TrWord(true))

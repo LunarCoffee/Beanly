@@ -288,38 +288,37 @@ class FunCommands {
 
     fun rplace() = command("rplace") {
         val canvas = RPlaceCanvas().apply { GlobalScope.launch { load() } }
-        val allowedGuilds = arrayOf("530871936025362433", "530866326219259904")
 
         description = "An open canvas similar to r/place."
         aliases = listOf("redditplace")
 
         extDescription = """
             |`$name [nogrid|raw|colors|put|snap|dsnap|gallery] [x] [y] [color|snapshotname]`\n
-            |A small r/place in Discord! The first argument should be an action to perform.\n
-            |If it is empty, I will send you a picture of the canvas as of now.\n
-            |If the action is `nogrid`, I'll send you an image of the canvas without the grid, as
-            |well the stats embed.\n
-            |If the action is `raw`, I'll send you only the image of the canvas.\n
-            |It if is `colors`, I'll send you all the available colors you can put pixels with.\n
-            |If it is `put`, you should specify three more arguments: the `x` coordinate,
-            |`y` coordinate, and `color` you want your pixel to be. Like on a cartesian plane, the
-            |x axis goes horizontally and the y axis goes vertically.\n
-            |If it is `snap`, I will save the current canvas as an image with the name given by
-            |`snapshotname`, which can be accessed using the `gallery` action.\n
+            |A small r/place in Discord! The first argument should be an action to perform.
+            |&{Viewing the canvas:}
+            |If the action is empty, I will send you a picture of the canvas as of now.\n
+            |If it is `nogrid`, I'll send you an image of the canvas without the grid, as well the
+            |stats embed.\n
+            |If it is `raw`, I'll send you only the image of the canvas.
+            |&{Drawing on the canvas:}
+            |It the action is `colors`, I'll send you all the available colors you can use.\n
+            |If it is `put`, you should specify three more arguments: the `x` coordinate, `y`
+            |coordinate, and `color` you want your pixel to be. Like on a cartesian plane, the x
+            |axis goes horizontally and the y axis goes vertically.
+            |&{Taking and viewing snapshots:}
+            |If the action is `snap`, I will save the current canvas as an image with the name
+            |given by `snapshotname`, which can be accessed using the `gallery` action.\n
             |If it is `dsnap`, I will delete the snapshot with the name `snapshotname`.
             |Finally, if the action is `gallery`, I will list all previously taken snapshots of the
-            |canvas, with their names and the times at which they were taken.\n
-            |Note that you can only place a pixel every 5 minutes, and that the canvas is shared
-            |across all the servers I'm in.
+            |canvas, with their names and the times at which they were taken.
+            |&{Notes:}
+            |You can only place a pixel every 5 minutes, and that the canvas is shared
+            |across all the servers I'm in (meaning any changes anyone else makes is reflected
+            |everywhere).
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true), TrInt(true), TrInt(true), TrWord(true))
         execute { ctx, args ->
-            if (ctx.guild.id !in allowedGuilds) {
-                ctx.error("This feature is coming soon to your server!")
-                return@execute
-            }
-
             canvas.apply {
                 when (args.get<String>(0)) {
                     "" -> sendCanvas(ctx)
