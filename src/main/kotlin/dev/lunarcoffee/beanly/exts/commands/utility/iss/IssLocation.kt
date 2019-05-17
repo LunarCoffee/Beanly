@@ -4,12 +4,12 @@ import dev.lunarcoffee.beanly.consts.BEANLY_CONFIG
 import dev.lunarcoffee.beanly.consts.GSON
 import io.github.rybalkinsd.kohttp.dsl.async.asyncHttpGet
 import io.github.rybalkinsd.kohttp.ext.url
-import sun.awt.SunHints
 import java.awt.Color
 import java.awt.Font
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
+import java.awt.RenderingHints as RH
 
 class IssLocation {
     val image = "src/main/resources/mapbox/iss_map.png"
@@ -43,8 +43,8 @@ class IssLocation {
         val dotLayer = BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB).apply {
             createGraphics().apply {
                 // Make the text look nice.
-                setRenderingHint(SunHints.KEY_ANTIALIASING, SunHints.VALUE_ANTIALIAS_ON)
-                setRenderingHint(SunHints.KEY_STROKE_CONTROL, SunHints.VALUE_STROKE_PURE)
+                setRenderingHint(RH.KEY_ANTIALIASING, RH.VALUE_ANTIALIAS_ON)
+                setRenderingHint(RH.KEY_STROKE_CONTROL, RH.VALUE_STROKE_PURE)
 
                 drawImage(image, -20, -20, null)
                 paint = Color.RED

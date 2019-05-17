@@ -13,7 +13,6 @@ import dev.lunarcoffee.framework.core.CommandContext
 import dev.lunarcoffee.framework.core.transformers.utility.SplitTime
 import kotlinx.coroutines.runBlocking
 import org.litote.kmongo.eq
-import sun.awt.SunHints
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -26,6 +25,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
+import java.awt.RenderingHints as RH
 
 class RPlaceCanvas {
     private val canvas = Array(CANVAS_SIZE) { Array(CANVAS_SIZE) { Color.WHITE } }
@@ -146,8 +146,8 @@ class RPlaceCanvas {
         val image = BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB).apply {
             createGraphics().apply {
                 // Make the text look nice.
-                setRenderingHint(SunHints.KEY_ANTIALIASING, SunHints.VALUE_ANTIALIAS_ON)
-                setRenderingHint(SunHints.KEY_STROKE_CONTROL, SunHints.VALUE_STROKE_PURE)
+                setRenderingHint(RH.KEY_ANTIALIASING, RH.VALUE_ANTIALIAS_ON)
+                setRenderingHint(RH.KEY_STROKE_CONTROL, RH.VALUE_STROKE_PURE)
 
                 // Fill background with white.
                 fillRect(0, 0, IMAGE_SIZE, IMAGE_SIZE)
