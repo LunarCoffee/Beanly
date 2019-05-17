@@ -1,4 +1,4 @@
-@file:Suppress("CanBeParameter", "MemberVisibilityCanBePrivate")
+@file:Suppress("MemberVisibilityCanBePrivate")
 
 package dev.lunarcoffee.framework.core.transformers.utility
 

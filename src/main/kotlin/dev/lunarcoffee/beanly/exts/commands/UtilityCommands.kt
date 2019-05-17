@@ -490,9 +490,9 @@ class UtilityCommands {
                             // Turn "&{name}" into a field with name [name] and the content of the
                             // part below the tag (until the next field tag).
                             val matcher = singleField.toPattern().matcher(extDescription)
-                            val descriptionFields = mutableListOf<Pair<String, String>>()
+                            val descriptionFields = mutableMapOf<String, String>()
                             while (matcher.find()) {
-                                descriptionFields += Pair(matcher.group(1), fieldContents.next())
+                                descriptionFields[matcher.group(1)] = fieldContents.next()
                             }
 
                             for ((fName, fContent) in descriptionFields) {
