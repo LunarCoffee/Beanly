@@ -245,13 +245,13 @@ class UtilityCommands {
             |This command is for managing reminders made by the `remind` command. You can view and
             |cancel any of your reminders here.
             |&{Viewing reminders:}
-            |Viewing your active reminders is easy. Just use the command without arguments (i.e.
+            |Seeing your active reminders is easy. Just use the command without arguments (i.e.
             |`..remindlist`), and I will list out all of your active reminders. Each entry will
             |have the reminder's reason and the time it will be fired at.
             |&{Cancelling reminders:}
-            |Cancelling reminders is also easy. The first argument must be `cancel`, and the second
-            |argument can be either a number or range of numbers (i.e. `1-5` or `4-6`). I will
-            |cancel the reminders with the IDs you specify (either `id` or `range`).
+            |Reminder cancellation is also easy. The first argument must be `cancel`, and the
+            |second argument can be either a number or range of numbers (i.e. `1-5` or `4-6`). I
+            |will cancel the reminders with the IDs you specify (either `id` or `range`).
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true, "list"), TrWord(true))

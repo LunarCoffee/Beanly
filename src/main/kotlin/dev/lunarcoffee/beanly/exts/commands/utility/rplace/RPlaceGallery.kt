@@ -85,7 +85,7 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
     suspend fun sendGallery(ctx: CommandContext, args: CommandArguments) {
         val name = args.get<String>(3)
 
-        withContext(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             if (name.isEmpty()) {
                 // Make a string of all of the snapshots' names and creation times.
                 val snapshots = File(SNAPSHOT_PATH)
@@ -95,15 +95,18 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
                         val snapshotName = it.name.substringBefore("=")
                         val time = getSnapshotTime(it.name)
 
-                        Pair("**$snapshotName**: $time", time)
+                        // Time to sort by (the above [time] is a formatted string).
+                        val timeMs = it.name.substringAfterLast("=").substringBefore(".").toLong()
+
+                        Triple("**$snapshotName**: $time", time, timeMs)
                     }
-                    .sortedBy { it.second.toLong() }  // Sort by time created.
+                    .sortedByDescending { it.third }  // Sort by time created.
                     .chunked(16)
                     .map { pairs -> pairs.joinToString("\n") { it.first } }
 
                 if (snapshots.count() == 0) {
                     ctx.success("There are no canvas snapshots!")
-                    return@withContext
+                    return@launch
                 }
 
                 ctx.send(
@@ -127,7 +130,7 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
                         .path
                 } catch (e: NoSuchElementException) {
                     ctx.error("There is no snapshot with that name!")
-                    return@withContext
+                    return@launch
                 }
 
                 ctx.sendMessage(
