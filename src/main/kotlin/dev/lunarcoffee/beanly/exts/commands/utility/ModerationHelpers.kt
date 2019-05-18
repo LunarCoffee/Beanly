@@ -3,6 +3,7 @@ package dev.lunarcoffee.beanly.exts.commands.utility
 import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.exts.commands.utility.timers.MuteTimer
 import dev.lunarcoffee.framework.api.dsl.embed
+import dev.lunarcoffee.framework.api.extensions.await
 import dev.lunarcoffee.framework.api.extensions.error
 import dev.lunarcoffee.framework.api.extensions.send
 import dev.lunarcoffee.framework.core.CommandArguments
@@ -11,10 +12,9 @@ import dev.lunarcoffee.framework.core.transformers.utility.Found
 import dev.lunarcoffee.framework.core.transformers.utility.SplitTime
 import dev.lunarcoffee.framework.core.transformers.utility.UserSearchResult
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.Member
-import net.dv8tion.jda.api.entities.Role
-import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.audit.AuditLogChange
+import net.dv8tion.jda.api.audit.TargetType
+import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.exceptions.PermissionException
 import org.litote.kmongo.coroutine.CoroutineCollection
 import org.litote.kmongo.eq
@@ -115,5 +115,27 @@ suspend inline fun banAction(
         action(guild, user)
     } catch (e: PermissionException) {
         ctx.error("I don't have enough permissions to do that!")
+    }
+}
+
+// Generates a name for an audit action. For example, if [type] is [TargetType.MEMBER], this will
+// return the tag of the member. If [type] is [TargetType.ROLE], this will return the role's name
+// as a mention.
+suspend fun getAuditTargetName(ctx: CommandContext, type: TargetType, id: String): String {
+    return when (type) {
+        TargetType.GUILD -> ctx.jda.getGuildById(id)!!.name
+        TargetType.CHANNEL -> {
+            val textChannel = ctx.guild.getTextChannelById(id)
+            val voiceChannel = ctx.guild.getVoiceChannelById(id)
+
+            val name = textChannel?.asMention ?: voiceChannel?.name?.run { "VC `$this`" }
+            name ?: "(unavailable)"
+        }
+        TargetType.ROLE -> ctx.jda.getRoleById(id)!!.asMention
+        TargetType.MEMBER -> ctx.guild.getMemberById(id)?.user?.asTag ?: "(unavailable)"
+        TargetType.INVITE -> "(some invite link)"
+        TargetType.WEBHOOK -> ctx.jda.retrieveWebhookById(id).await().name
+        TargetType.EMOTE -> ctx.jda.getEmoteById(id)?.asMention ?: "(unavailable)"
+        else -> "(unavailable)"
     }
 }

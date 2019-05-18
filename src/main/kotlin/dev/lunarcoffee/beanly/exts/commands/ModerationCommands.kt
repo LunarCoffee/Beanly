@@ -1,9 +1,12 @@
 package dev.lunarcoffee.beanly.exts.commands
 
+import dev.lunarcoffee.beanly.constToEng
 import dev.lunarcoffee.beanly.consts.COL_NAMES
 import dev.lunarcoffee.beanly.consts.DB
 import dev.lunarcoffee.beanly.consts.Emoji
+import dev.lunarcoffee.beanly.consts.TIME_FORMATTER
 import dev.lunarcoffee.beanly.exts.commands.utility.banAction
+import dev.lunarcoffee.beanly.exts.commands.utility.getAuditTargetName
 import dev.lunarcoffee.beanly.exts.commands.utility.muteAction
 import dev.lunarcoffee.beanly.exts.commands.utility.muteInfo
 import dev.lunarcoffee.beanly.exts.commands.utility.timers.MuteTimer
@@ -24,7 +27,10 @@ import dev.lunarcoffee.framework.core.transformers.utility.Found
 import dev.lunarcoffee.framework.core.transformers.utility.NotFound
 import dev.lunarcoffee.framework.core.transformers.utility.SplitTime
 import dev.lunarcoffee.framework.core.transformers.utility.UserSearchResult
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException
 import net.dv8tion.jda.api.exceptions.PermissionException
 import org.litote.kmongo.eq
 import java.time.Instant
@@ -423,6 +429,75 @@ class ModerationCommands {
 
             val slowmodeRepr = if (slowmode.totalMs > 0) "`$slowmode`" else "disabled"
             ctx.success("This channel's slowmode time is now `$slowmodeRepr`!")
+        }
+    }
+
+    fun logs() = command("logs") {
+        description = "Gets audit log history."
+        aliases = listOf("audits", "auditlogs")
+
+        extDescription = """
+            |`$name [limit]`\n
+            |This command retrieves the last `limit` entries in the audit log. If `limit` is not
+            |given, I will get the last ten entries. For each audit log entry, I'll show the type
+            |of the audit, the user that initiated it, the affected target type and name, the time
+            |at which it took place, and the reason (when a user is banned, for example).
+            |&{Limitations:}
+            |I won't show you what actually changed, since that would require more effort for me to
+            |do than for you to open up the audit logs in the server settings. You need to be able
+            |to view the logs already to use this command, anyway.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrInt(true, 10))
+        execute { ctx, args ->
+            val limit = args.get<Int>(0)
+            if (limit !in 1..100) {
+                ctx.error("I can't get that many log entries!")
+                return@execute
+            }
+
+            // Make sure the author can normally check audit logs.
+            val guildAuthor = ctx.guild.getMember(ctx.event.author) ?: return@execute
+            if (!guildAuthor.hasPermission(Permission.VIEW_AUDIT_LOGS)) {
+                ctx.error("You need to be able to view audit logs!")
+                return@execute
+            }
+
+            val logs = try {
+                ctx.guild.retrieveAuditLogs().takeAsync(limit).await()
+            } catch (e: InsufficientPermissionException) {
+                ctx.error("I need to be able to view this server's audit logs!")
+                return@execute
+            }
+
+            val guildName = ctx.guild.name
+            ctx.send(
+                embedPaginator(ctx.event.author) {
+                    for (log in logs) {
+                        page(
+                            embed {
+                                log.run {
+                                    // Name of audit target based on its type.
+                                    val name = runBlocking {
+                                        getAuditTargetName(ctx, targetType, targetId)
+                                    }
+
+                                    title = "${Emoji.OPEN_BOOK}  Audit logs of **$guildName**:"
+                                    description = """
+                                        |**Audit ID**: $id
+                                        |**Type**: ${type.constToEng()}
+                                        |**Initiator**: ${user?.asTag ?: "(none)"}
+                                        |**Target type**: ${targetType.name.toLowerCase()}
+                                        |**Target**: $name
+                                        |**Time occurred**: ${timeCreated.format(TIME_FORMATTER)}
+                                        |**Reason**: ${reason ?: "(no reason)"}
+                                    """.trimMargin()
+                                }
+                            }
+                        )
+                    }
+                }
+            )
         }
     }
 }

@@ -13,7 +13,7 @@ class SystemStatistics {
     val logicalProcessors = Runtime.getRuntime().availableProcessors()
 
     val osName = System.getProperty("os.name") ?: "(unknown)"
-    val language = "Kotlin 1.3.30"
+    val language = "Kotlin 1.3.31"
     val jvmVersion = System.getProperty("java.version") ?: "(unknown)"
 
     var runningThreads: Int

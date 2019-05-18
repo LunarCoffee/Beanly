@@ -2,13 +2,13 @@
 
 package dev.lunarcoffee.beanly.exts.commands
 
+import dev.lunarcoffee.beanly.constToEng
 import dev.lunarcoffee.beanly.consts.COL_NAMES
 import dev.lunarcoffee.beanly.consts.DB
 import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.consts.TIME_FORMATTER
 import dev.lunarcoffee.beanly.exts.commands.utility.FastFactorialCalculator
 import dev.lunarcoffee.beanly.exts.commands.utility.timers.RemindTimer
-import dev.lunarcoffee.beanly.gmtToEst
 import dev.lunarcoffee.beanly.trimToDescription
 import dev.lunarcoffee.framework.api.dsl.command
 import dev.lunarcoffee.framework.api.dsl.embed
@@ -22,6 +22,8 @@ import dev.lunarcoffee.framework.core.transformers.*
 import dev.lunarcoffee.framework.core.transformers.utility.Found
 import dev.lunarcoffee.framework.core.transformers.utility.SplitTime
 import dev.lunarcoffee.framework.core.transformers.utility.UserSearchResult
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.VoiceChannel
 import org.litote.kmongo.eq
 import java.time.Instant
 import java.util.*
@@ -31,7 +33,7 @@ import kotlin.math.roundToInt
 @CommandGroup("Utility")
 class UtilityCommands {
     fun ui() = command("ui") {
-        description = "Gets information about a user."
+        description = "Gets info about a user."
         aliases = listOf("userinfo")
 
         extDescription = """
@@ -60,7 +62,7 @@ class UtilityCommands {
                         title = "${Emoji.MAG_GLASS}  Info on $botOrUser **$asTag**:"
                         description = """
                             |**User ID**: $id
-                            |**Creation time**: ${timeCreated.gmtToEst().format(TIME_FORMATTER)}
+                            |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
                             |**Avatar ID**: ${avatarId ?: "(none)"}
                             |**Mention**: $asMention
                         """.trimMargin()
@@ -73,7 +75,7 @@ class UtilityCommands {
     }
 
     fun mi() = command("mi") {
-        description = "Gets information about a member of the current server."
+        description = "Gets info about a member of the current server."
         aliases = listOf("memberinfo")
 
         extDescription = """
@@ -118,14 +120,161 @@ class UtilityCommands {
                             |**Nickname**: ${nickname ?: "(none)"}
                             |**Status**: ${onlineStatus.key}
                             |**Activity**: $activity
-                            |**Creation time**: ${timeCreated.gmtToEst().format(TIME_FORMATTER)}
-                            |**Join time**: ${timeJoined.gmtToEst().format(TIME_FORMATTER)}
+                            |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
+                            |**Join time**: ${timeJoined.format(TIME_FORMATTER)}
                             |**Avatar ID**: ${user.avatarId ?: "(none)"}
                             |**Mention**: $asMention
                             |**Roles**: $userRoles
                         """.trimMargin()
 
                         thumbnail { url = user.avatarUrl ?: user.defaultAvatarUrl }
+                    }
+                }
+            )
+        }
+    }
+
+    fun ci() = command("ci") {
+        description = "Gets info about a channel."
+        aliases = listOf("channelinfo")
+
+        extDescription = """
+            |`$name [name|id]`\n
+            |Gets detailed information about a text or voice channel. If a name or ID is specified,
+            |this command will attempt to get a channel with them. Note that even if the name or ID
+            |you give me may be valid, I have to be in the server with that channel in order to get
+            |info about it. If you don't give me a name or ID, the current channel will be used.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(true))
+        execute { ctx, args ->
+            val nameOrId = args.get<String>(0)
+                .ifEmpty { ctx.event.channel.id }
+                .replace("""[#<>]""".toRegex(), "")  // Trim channel mention prefix and suffix.
+
+            val channel = if (nameOrId.toLongOrNull() != null) {
+                ctx.jda.getTextChannelById(nameOrId) ?: ctx.jda.getVoiceChannelById(nameOrId)
+            } else {
+                ctx.jda.getTextChannelsByName(nameOrId, true).firstOrNull()
+                    ?: ctx.jda.getVoiceChannelByName(nameOrId, false).firstOrNull()
+            }
+
+            if (channel == null) {
+                ctx.error("I can't find a text or voice channel with that name or ID!")
+                return@execute
+            }
+
+            ctx.send(
+                embed {
+                    channel.run {
+                        when (this) {
+                            is TextChannel -> {
+                                val slowmode = if (slowmode != 0) {
+                                    SplitTime(slowmode.toLong()).toString()
+                                } else {
+                                    "(none)"
+                                }
+
+                                title = "${Emoji.MAG_GLASS}  Info on text channel **#$name**:"
+                                description = """
+                                    |**Channel ID**: $id
+                                    |**Topic**: ${topic ?: "(none)"}
+                                    |**Category**: ${parent?.name ?: "(none)"}
+                                    |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
+                                    |**Slowmode**: $slowmode
+                                    |**NSFW**: ${if (isNSFW) "yes" else "no"}
+                                """.trimMargin()
+                            }
+                            is VoiceChannel -> {
+                                val limit = if (userLimit == 0) "(none)" else userLimit.toString()
+
+                                title = "${Emoji.MAG_GLASS}  Info on voice channel **#$name**:"
+                                description = """
+                                    |**Channel ID**: $id
+                                    |**Bitrate**: ${bitrate / 1_000}kb/s
+                                    |**User limit**: $limit users
+                                    |**Category**: ${parent?.name ?: "(none)"}
+                                    |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
+                                """.trimMargin()
+                            }
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    fun si() = command("si") {
+        description = "Gets info about a server."
+        aliases = listOf("gi", "guildinfo", "serverinfo")
+
+        extDescription = """
+            |`$name [name|id]`\n
+            |Gets detailed information about a server. If a name or ID is specified, this command
+            |will attempt to get a server with them. Note that even if the name or ID you give is
+            |valid, I have to be in the server to be able to find it. If you don't give me a name
+            |or ID, the current server will be used instead.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(true))
+        execute { ctx, args ->
+            val nameOrId = args.get<String>(0).ifEmpty { ctx.guild.id }
+            val guild = if (nameOrId.toLongOrNull() != null) {
+                ctx.jda.getGuildById(nameOrId)
+            } else {
+                ctx.jda.getGuildsByName(nameOrId, true).firstOrNull()
+            }
+
+            if (guild == null) {
+                ctx.error("I can't find a server with that name or ID!")
+                return@execute
+            }
+
+            ctx.send(
+                embedPaginator(ctx.event.author) {
+                    guild.run {
+                        page(
+                            embed {
+                                val afkChannel = afkChannel?.id?.run { "<#$this>" } ?: "(none)"
+                                val features = features.map { it.constToEng() }
+
+                                title = "${Emoji.MAG_GLASS}  Info on server **$name**:"
+                                description = """
+                                    |**Guild ID**: $id
+                                    |**Total members**: ${members.size} members
+                                    |**Total emotes**: ${emotes.size} emotes
+                                    |**Total channels:**: ${channels.size} channels
+                                    |**Text channels**: ${textChannels.size} text channels
+                                    |**Voice channels**: ${voiceChannels.size} voice channels
+                                    |**AFK channel**: $afkChannel
+                                    |**NSFW filter:** ${explicitContentLevel.description}
+                                    |**Special features**: ${features.ifEmpty { "(none)" }}
+                                """.trimMargin()
+
+                                thumbnail { url = iconUrl }
+                            }
+                        )
+                        page(
+                            embed {
+                                val roles = if (guild.id == ctx.guild.id) {
+                                    roles.map { it.asMention }.toString()
+                                } else {
+                                    "(unavailable)"
+                                }
+
+                                title = "${Emoji.MAG_GLASS}  Info on server **$name**:"
+                                description = """
+                                    |**Owner**: ${owner?.user?.asTag ?: "(none)"}
+                                    |**Voice region**: ${region.getName()}
+                                    |**Roles**: ${roles.ifEmpty { "(none)" }}
+                                    |**Verification level**: ${verificationLevel.constToEng()}
+                                    |**MFA level**: ${requiredMFALevel.constToEng()}
+                                    |**Icon ID**: ${iconId ?: "(no icon)"}
+                                """.trimMargin()
+
+                                thumbnail { url = iconUrl }
+                            }
+                        )
                     }
                 }
             )

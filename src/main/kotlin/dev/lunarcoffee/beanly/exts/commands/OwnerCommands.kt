@@ -7,7 +7,6 @@ import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.exts.commands.utility.ExecResult
 import dev.lunarcoffee.beanly.exts.commands.utility.executeKotlin
 import dev.lunarcoffee.beanly.trimToDescription
-import dev.lunarcoffee.framework.core.annotations.CommandGroup
 import dev.lunarcoffee.framework.api.dsl.command
 import dev.lunarcoffee.framework.api.dsl.embed
 import dev.lunarcoffee.framework.api.dsl.messagePaginator
@@ -15,7 +14,11 @@ import dev.lunarcoffee.framework.api.extensions.await
 import dev.lunarcoffee.framework.api.extensions.error
 import dev.lunarcoffee.framework.api.extensions.send
 import dev.lunarcoffee.framework.api.extensions.success
-import dev.lunarcoffee.framework.core.transformers.*
+import dev.lunarcoffee.framework.core.annotations.CommandGroup
+import dev.lunarcoffee.framework.core.transformers.TrInt
+import dev.lunarcoffee.framework.core.transformers.TrRest
+import dev.lunarcoffee.framework.core.transformers.TrSplit
+import dev.lunarcoffee.framework.core.transformers.TrWord
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -271,15 +274,21 @@ class OwnerCommands {
 
         extDescription = """
             |`$name`\n
-            |Shuts down the bot process. There is a roughly 5-second long period of time between
-            |command usage and actual process termination. This is owner only for obvious reasons.
+            |Shuts down the bot process. There is a roughly three second long period of time
+            |between command usage and actual process termination. First, I wait two seconds and
+            |call `shutdownNow` on my `JDA` instance. Then, I wait another second and terminate
+            |myself. Tragic. This is owner only for obvious reasons.
         """.trimToDescription()
 
         execute { ctx, _ ->
             ctx.success("Goodbye, world...")
 
-            delay(5000)
+            delay(2000)
             ctx.jda.shutdownNow()
+
+            // Give JDA some time to shut down in case I'm in China with a 10 b/s connection. Oh,
+            // wait... I wouldn't be able to access Discord without a VPN anyway.
+            delay(1000)
             exitProcess(0)
         }
     }
