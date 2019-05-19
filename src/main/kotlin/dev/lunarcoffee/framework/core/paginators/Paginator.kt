@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.User
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.schedule
 
 abstract class Paginator {
@@ -72,6 +73,6 @@ abstract class Paginator {
         val JUMP_BUTTONS = arrayOf(PaginatorButtons.JUMP_LEFT, PaginatorButtons.JUMP_RIGHT)
 
         // Maps message IDs to their paginators.
-        val active = mutableMapOf<String, Paginator>()
+        val active = ConcurrentHashMap<String, Paginator>()
     }
 }

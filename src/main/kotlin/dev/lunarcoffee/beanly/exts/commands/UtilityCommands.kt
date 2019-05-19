@@ -603,6 +603,7 @@ class UtilityCommands {
                                     .commands
                                     .filter { it.groupName == c.groupName }
                                     .map { it.name }
+                                    .sorted()
                                 description += "**${c.groupName}**: $names\n"
                             }
                         }

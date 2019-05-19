@@ -47,7 +47,7 @@ open class Bot(configPath: String) {
 
     // Mutable to allow for dynamic loading of commands.
     var commands = groupToCommands.values.flatten().toMutableList()
-    val commandNames get() = commands.flatMap { it.names }
+    val commandNames get() = commands.flatMap { it.names }.sorted()
 
     // Register all classes marked with the [ListenerGroup] annotation as event listeners. Most, if
     // not all of this complexity, is simply checking for the correct types and constructor
@@ -65,7 +65,7 @@ open class Bot(configPath: String) {
 
     // Mutable to allow for dynamic loading of event listeners.
     val listeners = listenerGroups.toMutableList()
-    val listenerNames get() = listeners.map { it.javaClass.name.substringAfterLast(".") }
+    val listenerNames get() = listeners.map { it.javaClass.name.substringAfterLast(".") }.sorted()
 
     init {
         jda = JDABuilder()

@@ -308,7 +308,8 @@ class FunCommands {
             |&{Taking and viewing snapshots:}
             |If the action is `snap`, I will save the current canvas as an image with the name
             |given by `snapshotname`, which can be accessed using the `gallery` action.\n
-            |If it is `dsnap`, I will delete the snapshot with the name `snapshotname`.
+            |If it is `dsnap`, I will delete the snapshot with the name `snapshotname`. For safety
+            |reasons, only my owner can delete snapshots.\n
             |Finally, if the action is `gallery`, I will list all previously taken snapshots of the
             |canvas, with their names and the times at which they were taken.
             |&{Notes:}
@@ -319,6 +320,9 @@ class FunCommands {
 
         expectedArgs = listOf(TrWord(true), TrInt(true), TrInt(true), TrWord(true))
         execute { ctx, args ->
+            // Send this when someone not the owner tries to use <snap> or <dsnap>.
+            val ownerTag = ctx.jda.getUserById(ctx.bot.config.ownerId)!!.asTag
+
             canvas.apply {
                 when (args.get<String>(0)) {
                     "" -> sendCanvas(ctx)
@@ -327,7 +331,11 @@ class FunCommands {
                     "colors" -> sendColors(ctx)
                     "put" -> putPixelContext(ctx, args)
                     "snap" -> takeSnapshot(ctx, args)
-                    "dsnap" -> deleteSnapshot(ctx, args)
+                    "dsnap" -> if (ctx.isOwner()) {
+                        deleteSnapshot(ctx, args)
+                    } else {
+                        ctx.error("Contact `$ownerTag` to request a snapshot deletion.")
+                    }
                     "gallery" -> sendGallery(ctx, args)
                     else -> ctx.error("That operation is invalid!")
                 }

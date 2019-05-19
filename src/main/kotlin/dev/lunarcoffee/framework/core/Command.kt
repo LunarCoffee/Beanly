@@ -17,6 +17,7 @@ class Command(override var name: String) : BaseCommand {
 
     override var deleteSender = false
     override var ownerOnly = false
+    override var nsfwOnly = false
     override var noArgParsing = false
 
     override lateinit var execute: suspend (CommandContext, CommandArguments) -> Unit

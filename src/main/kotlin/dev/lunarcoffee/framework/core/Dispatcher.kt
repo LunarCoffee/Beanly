@@ -42,12 +42,19 @@ class Dispatcher(
             .find { name in it.names }
             ?: return
 
-        // Owner only command and user ID check.
         if (command.ownerOnly && event.author.id != bot.config.ownerId) {
             GlobalScope.launch {
                 event.channel.error("You need to be the owner to use that command!")
             }
             log.info { "${event.author.name} tried to use owner-only command $command!" }
+            return
+        }
+
+        if (command.nsfwOnly && !event.textChannel.isNSFW) {
+            GlobalScope.launch {
+                event.channel.error("You need to be in an NSFW channel to use that command!")
+            }
+            log.info { "${event.author.name} tried to use NSFW-only command $command!" }
             return
         }
 
