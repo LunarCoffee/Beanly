@@ -36,8 +36,8 @@ import org.litote.kmongo.eq
 import java.time.Instant
 import java.util.*
 
-@CommandGroup("Moderation")
-class ModerationCommands {
+@CommandGroup("Mod")
+class ModCommands {
     fun mute() = command("mute") {
         val muteCol = DB.getCollection<MuteTimer>(COL_NAMES[MuteTimer::class.simpleName]!!)
 
