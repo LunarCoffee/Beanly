@@ -131,7 +131,7 @@ suspend fun getAuditTargetName(ctx: CommandContext, type: TargetType, id: String
             val name = textChannel?.asMention ?: voiceChannel?.name?.run { "VC `$this`" }
             name ?: "(unavailable)"
         }
-        TargetType.ROLE -> ctx.jda.getRoleById(id)!!.asMention
+        TargetType.ROLE -> ctx.jda.getRoleById(id)?.asMention ?: "(unavailable)"
         TargetType.MEMBER -> ctx.guild.getMemberById(id)?.user?.asTag ?: "(unavailable)"
         TargetType.INVITE -> "(some invite link)"
         TargetType.WEBHOOK -> ctx.jda.retrieveWebhookById(id).await().name

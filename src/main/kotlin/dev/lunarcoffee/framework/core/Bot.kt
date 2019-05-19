@@ -25,7 +25,15 @@ open class Bot(configPath: String) {
     // Reflections (which worked), so I had to do this.
     private val commandGroups = File(config.sourceRootDir)
         .walk()
-        .mapNotNull { silence { cl.loadClass("${config.commandP}.${it.nameWithoutExtension}") } }
+        .mapNotNull {
+            // This allows loading command groups in deeper package hierarchies.
+            val classPath = it
+                .absolutePath
+                .replace("/", ".")
+                .substringAfter(config.commandP)
+                .substringBeforeLast(".")
+            silence { cl.loadClass("${config.commandP}$classPath") }
+        }
         .filter { c -> c.annotations.any { it.annotationClass == CommandGroup::class } }
 
     // Map of [CommandGroup]s to their [BaseCommand]s with messy reflection stuff.
@@ -54,7 +62,15 @@ open class Bot(configPath: String) {
     // signatures to prevent mistakes. And very painful reflection.
     private val listenerGroups = File(config.sourceRootDir)
         .walk()
-        .mapNotNull { silence { cl.loadClass("${config.listenerP}.${it.nameWithoutExtension}") } }
+        .mapNotNull {
+            // This allows loading listener groups in deeper package hierarchies.
+            val classPath = it
+                .absolutePath
+                .replace("/", ".")
+                .substringAfter(config.listenerP)
+                .substringBeforeLast(".")
+            silence { cl.loadClass("${config.listenerP}$classPath") }
+        }
         .filter { c -> c.annotations.any { it.annotationClass == ListenerGroup::class } }
         .map { c ->
             c.constructors.find {

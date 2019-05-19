@@ -204,6 +204,58 @@ class UtilityCommands {
         }
     }
 
+    fun ei() = command("ei") {
+        description = "Gets info about a custom emote."
+        aliases = listOf("emoteinfo")
+
+        extDescription = """
+            |`$name name|id`\n
+            |Gets detailed information about a custom emote. You must specify the name or ID of the
+            |emote you are looking for, and I will attempt to get it for you. Note that even if an
+            |ID you provide is valid, I have to be in the server where it comes from in order to be
+            |able to get it.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord())
+        execute { ctx, args ->
+            // Trim emote mention characters.
+            val nameOrId = args.get<String>(0).replace("""[:<>]""".toRegex(), "")
+            val pureId = nameOrId.takeLast(18)
+
+            val emote = if (pureId.toLongOrNull() != null) {
+                ctx.jda.getEmoteById(pureId)
+            } else {
+                // Prioritize emotes from the current guild.
+                ctx.guild.getEmotesByName(nameOrId, true).firstOrNull()
+                    ?: ctx.jda.getEmotesByName(nameOrId, true).firstOrNull()
+            }
+
+            if (emote == null) {
+                ctx.error("I can't find an emote with that name or ID!")
+                return@execute
+            }
+
+            ctx.send(
+                embed {
+                    emote.run {
+                        val animated = if (isAnimated) " animated" else ""
+
+                        title = "${Emoji.MAG_GLASS}  Info on$animated emote **$name**:"
+                        description = """
+                            |**Emote ID**: $id
+                            |**Server** ${guild?.name ?: "(none)"}
+                            |**Managed**: ${if (isManaged) "yes" else "no"}
+                            |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
+                            |**Required roles**: ${roles.ifEmpty { "(none)" }}
+                        """.trimMargin()
+
+                        thumbnail { url = imageUrl }
+                    }
+                }
+            )
+        }
+    }
+
     fun si() = command("si") {
         description = "Gets info about a server."
         aliases = listOf("gi", "guildinfo", "serverinfo")
