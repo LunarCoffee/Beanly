@@ -9,6 +9,7 @@ import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.consts.TIME_FORMATTER
 import dev.lunarcoffee.beanly.exts.commands.utility.FastFactorialCalculator
 import dev.lunarcoffee.beanly.exts.commands.utility.timers.RemindTimer
+import dev.lunarcoffee.beanly.toYesNo
 import dev.lunarcoffee.beanly.trimToDescription
 import dev.lunarcoffee.framework.api.dsl.command
 import dev.lunarcoffee.framework.api.dsl.embed
@@ -178,11 +179,13 @@ class UtilityCommands {
                                 title = "${Emoji.MAG_GLASS}  Info on text channel **#$name**:"
                                 description = """
                                     |**Channel ID**: $id
+                                    |**Server**: ${guild.name}
                                     |**Topic**: ${topic ?: "(none)"}
+                                    |**Slowmode**: $slowmode
+                                    |**NSFW**: ${isNSFW.toYesNo()}
+                                    |**Mention**: $asMention
                                     |**Category**: ${parent?.name ?: "(none)"}
                                     |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
-                                    |**Slowmode**: $slowmode
-                                    |**NSFW**: ${if (isNSFW) "yes" else "no"}
                                 """.trimMargin()
                             }
                             is VoiceChannel -> {
@@ -191,8 +194,10 @@ class UtilityCommands {
                                 title = "${Emoji.MAG_GLASS}  Info on voice channel **#$name**:"
                                 description = """
                                     |**Channel ID**: $id
+                                    |**Server**: ${guild.name}
                                     |**Bitrate**: ${bitrate / 1_000}kb/s
                                     |**User limit**: $limit users
+                                    |**Mention**: <#$id>
                                     |**Category**: ${parent?.name ?: "(none)"}
                                     |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
                                 """.trimMargin()
@@ -222,13 +227,10 @@ class UtilityCommands {
             val nameOrId = args.get<String>(0).replace("""[:<>]""".toRegex(), "")
             val pureId = nameOrId.takeLast(18)
 
-            val emote = if (pureId.toLongOrNull() != null) {
-                ctx.jda.getEmoteById(pureId)
-            } else {
-                // Prioritize emotes from the current guild.
-                ctx.guild.getEmotesByName(nameOrId, true).firstOrNull()
-                    ?: ctx.jda.getEmotesByName(nameOrId, true).firstOrNull()
-            }
+            // Prioritize emotes from the current guild.
+            val emote = ctx.guild.getEmotesByName(nameOrId, true).firstOrNull()
+                ?: ctx.jda.getEmotesByName(nameOrId, true).firstOrNull()
+                ?: if (pureId.toLongOrNull() != null) ctx.jda.getEmoteById(pureId) else null
 
             if (emote == null) {
                 ctx.error("I can't find an emote with that name or ID!")
@@ -244,12 +246,66 @@ class UtilityCommands {
                         description = """
                             |**Emote ID**: $id
                             |**Server** ${guild?.name ?: "(none)"}
-                            |**Managed**: ${if (isManaged) "yes" else "no"}
+                            |**Managed**: ${isManaged.toYesNo()}
                             |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
                             |**Required roles**: ${roles.ifEmpty { "(none)" }}
                         """.trimMargin()
 
                         thumbnail { url = imageUrl }
+                    }
+                }
+            )
+        }
+    }
+
+    fun ri() = command("ri") {
+        description = "Gets info about a role."
+        aliases = listOf("roleinfo")
+
+        extDescription = """
+            |`$name [name|id]`\n
+            |Gets detailed information about a role. If a name or ID is specified, I will try to
+            |get a role with them. Note that even if the ID you provide is valid, I still need to
+            |be in the server the role is from in order to get information from it. If a namr or ID
+            |is not specified, I will get information about the default role (shows up as @everyone
+            |in the server settings).
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(true))
+        execute { ctx, args ->
+            val nameOrId = args.get<String>(0).ifEmpty { ctx.guild.publicRole.id }
+
+            // Prioritize roles from the current guild.
+            val role = ctx.guild.getRolesByName(nameOrId, true).firstOrNull()
+                ?: ctx.jda.getRolesByName(nameOrId, true).firstOrNull()
+                ?: if (nameOrId.toLongOrNull() != null) ctx.jda.getRoleById(nameOrId) else null
+
+            if (role == null) {
+                ctx.error("I can't find a role with that name or ID!")
+                return@execute
+            }
+
+            ctx.send(
+                embed {
+                    role.run {
+                        val roleName = if (role.isPublicRole) {
+                            "the public role"
+                        } else {
+                            "role **@$name**"
+                        }
+                        val mention = if (guild.id == ctx.guild.id) asMention else "(unavailable)"
+
+                        title = "${Emoji.MAG_GLASS}  Info on $roleName:"
+                        description = """
+                            |**Role ID**: $id
+                            |**Server**: ${guild.name}
+                            |**Displayed separately**: ${isHoisted.toYesNo()}
+                            |**Normally mentionable**: ${isMentionable.toYesNo()}
+                            |**Mention**: $mention
+                            |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
+                            |**Managed**: ${isManaged.toYesNo()}
+                            |**Permissions**: ${permissions.map { it.constToEng() }}
+                        """.trimMargin()
                     }
                 }
             )
