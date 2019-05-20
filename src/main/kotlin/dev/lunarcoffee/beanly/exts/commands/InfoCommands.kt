@@ -339,7 +339,7 @@ class InfoCommands {
                                     |**Guild ID**: $id
                                     |**Total members**: ${members.size} members
                                     |**Total emotes**: ${emotes.size} emotes
-                                    |**Total channels:**: ${channels.size} channels
+                                    |**Total channels**: ${channels.size} channels
                                     |**Text channels**: ${textChannels.size} text channels
                                     |**Voice channels**: ${voiceChannels.size} voice channels
                                     |**AFK channel**: $afkChannel
