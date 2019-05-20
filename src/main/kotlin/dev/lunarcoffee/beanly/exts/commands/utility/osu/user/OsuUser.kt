@@ -5,6 +5,7 @@ import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.consts.TIME_FORMATTER
 import dev.lunarcoffee.beanly.exts.commands.utility.osu.OsuHasMode
 import com.google.gson.GsonBuilder
+import dev.lunarcoffee.beanly.localWithoutWeekday
 import dev.lunarcoffee.framework.api.dsl.embed
 import dev.lunarcoffee.framework.api.extensions.error
 import dev.lunarcoffee.framework.api.extensions.send
@@ -30,7 +31,7 @@ class OsuUser(private val usernameOrId: String, override val mode: Int) : OsuHas
                         |**Accuracy**: $accuracy%
                         |**PP**: $pp
                         |**SS+/SS/S+/S/A**: $ssh/$ss/$sh/$s/$a
-                        |**Join time**: ${joinTime.format(TIME_FORMATTER).drop(4)}
+                        |**Join time**: ${joinTime.localWithoutWeekday()}
                         |**Play time**: $playTime
                         |**Link**: $link
                     """.trimMargin()

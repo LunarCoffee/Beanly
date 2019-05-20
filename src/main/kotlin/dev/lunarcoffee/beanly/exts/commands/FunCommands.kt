@@ -96,8 +96,8 @@ class FunCommands {
             for (roll in diceRolls) {
                 val errorMsg = when {
                     roll.times !in 1..100 -> "I can't roll a die that many times!"
-                    roll.sides !in 1..1000 -> "I can't roll a die with that many sides!"
-                    roll.mod !in -10000..10000 -> "That modifier is too big or small!"
+                    roll.sides !in 1..1_000 -> "I can't roll a die with that many sides!"
+                    roll.mod !in -10_000..10_000 -> "That modifier is too big or small!"
                     else -> ""
                 }
 
@@ -237,7 +237,7 @@ class FunCommands {
         execute { ctx, args ->
             val historyToSearch = args.get<Int>(0)
 
-            if (historyToSearch !in 1..1000) {
+            if (historyToSearch !in 1..1_000) {
                 ctx.error("I can't steal from that many messages in history!")
                 return@execute
             }

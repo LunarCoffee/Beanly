@@ -2,6 +2,7 @@
 
 package dev.lunarcoffee.framework.core.transformers.utility
 
+import dev.lunarcoffee.beanly.consts.TIME_FORMATTER
 import java.time.LocalDateTime
 
 class SplitTime(val days: Long, val hours: Long, val minutes: Long, val seconds: Long) {
@@ -15,6 +16,8 @@ class SplitTime(val days: Long, val hours: Long, val minutes: Long, val seconds:
         .plusHours(hours)
         .plusMinutes(minutes)
         .plusSeconds(seconds)!!
+
+    fun localWithoutWeekday() = asLocal.format(TIME_FORMATTER).drop(4)
 
     override fun toString(): String {
         val mtoDay = if (days != 1L) "s" else ""

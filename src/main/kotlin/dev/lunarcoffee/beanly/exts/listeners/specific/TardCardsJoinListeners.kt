@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 @ListenerGroup
 class TardCardsJoinListeners(private val bot: Bot) : ListenerAdapter() {
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
-        // Only affect one server.
+        // Only affect one guild.
         if (event.guild.id != "579464256882343946") {
             return
         }

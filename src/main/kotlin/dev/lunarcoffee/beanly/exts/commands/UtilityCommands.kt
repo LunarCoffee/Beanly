@@ -5,8 +5,8 @@ package dev.lunarcoffee.beanly.exts.commands
 import dev.lunarcoffee.beanly.consts.COL_NAMES
 import dev.lunarcoffee.beanly.consts.DB
 import dev.lunarcoffee.beanly.consts.Emoji
-import dev.lunarcoffee.beanly.consts.TIME_FORMATTER
 import dev.lunarcoffee.beanly.exts.commands.utility.FastFactorialCalculator
+import dev.lunarcoffee.beanly.exts.commands.utility.tags.TagManager
 import dev.lunarcoffee.beanly.exts.commands.utility.timers.RemindTimer
 import dev.lunarcoffee.beanly.trimToDescription
 import dev.lunarcoffee.framework.api.dsl.command
@@ -112,7 +112,7 @@ class UtilityCommands {
             val time = args.get<SplitTime>(0)
             val reason = args.get<String>(1)
 
-            val dateTime = time.asLocal.format(TIME_FORMATTER).replace(" at ", "` at `").drop(4)
+            val dateTime = time.localWithoutWeekday().replace(" at ", "` at `")
             ctx.success("I'll remind you on `$dateTime`!")
 
             val reminderTimer = RemindTimer(
@@ -180,10 +180,7 @@ class UtilityCommands {
                 }
 
                 val reminderPages = list.mapIndexed { i, reminder ->
-                    val time = SplitTime(reminder.time.time - Date().time)
-                        .asLocal
-                        .format(TIME_FORMATTER)
-                        .drop(4)
+                    val time = SplitTime(reminder.time.time - Date().time).localWithoutWeekday()
 
                     "**#${i + 1}**: `${reminder.reason.replace("`", "")}` on $time"
                 }.chunked(16).map { it.joinToString("\n") }
@@ -304,6 +301,59 @@ class UtilityCommands {
                     }
                 }
             )
+        }
+    }
+
+    fun tags() = command("tags") {
+        val tagManager = TagManager()
+
+        description = "Create textual tags to save!"
+        aliases = listOf("notes")
+
+        extDescription = """
+            |`$name [action] [tag name] [tag content]`\n
+            |This command lets you save information in tags. These tags have a name and can store
+            |a lot of content. They also store the person who created them and the time at which
+            |the tag was created.
+            |&{Viewing tags:}
+            |To view all the tags on the current server, use the command with no arguments (as in
+            |`..$name` only). To view a specific tag, action should be `view` and `tag name` should
+            |be the name of the tag you want to view.
+            |&{Adding tags:}
+            |To add a tag, `action` should be `add`, `tag name` should be the name you want to
+            |give the tag, and `tag content` should be the content of the tag. The name cannot be
+            |longer than 30 characters, and the content cannot be longer than 1000 characters.
+            |&{Editing tags:}
+            |If you ever want to change one of your tags, you can do so by making `action` the word
+            |`edit`, `tag name` the name of the tag you want to edit (you have to have created it),
+            |and `tag content` the updated content of the tag.
+            |&{Deleting tags:}
+            |To remove a tag, `action` has to be `delete`, and `tag name` has to be the name of the
+            |tag you want to delete (which has to have been created by you).
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(true), TrWord(true), TrRest(true))
+        execute { ctx, args ->
+            val action = args.get<String>(0)
+            if (action.isEmpty()) {
+                tagManager.sendTags(ctx)
+                return@execute
+            }
+
+            val tagName = args.get<String>(1)
+            val tagContent = args.get<String>(2)
+
+            tagManager.run {
+                when (action) {
+                    "view" -> sendOneTag(ctx, tagName)
+                    "add" -> addTag(ctx, tagName, tagContent)
+                    "edit" -> editTag(ctx, tagName, tagContent)
+                    "delete" -> deleteTag(ctx, tagName)
+                    else -> {
+                        ctx.error("That operation is invalid!")
+                    }
+                }
+            }
         }
     }
 

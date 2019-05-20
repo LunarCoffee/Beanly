@@ -165,7 +165,7 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
             .substringAfterLast("=")
             .substringBefore(".")
             .toLong() - System.currentTimeMillis()
-        return SplitTime(timeMs).asLocal.format(TIME_FORMATTER).drop(4)
+        return SplitTime(timeMs).localWithoutWeekday()
     }
 
     companion object {
