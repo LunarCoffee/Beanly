@@ -96,12 +96,15 @@ class OwnerCommands {
 
         description = "Executes a command in a shell."
         aliases = listOf("shell")
+
         ownerOnly = true
+        noArgParsing = true
 
         extDescription = """
             |`$name command`\n
             |Executes a command in an unconstrained bash environment. This command can only be used
-            |by my owner, for obvious security reasons.
+            |by my owner, for obvious security reasons. There is a 30 second timeout before the
+            |process is automatically killed.
         """.trimToDescription()
 
         expectedArgs = listOf(TrRest())
