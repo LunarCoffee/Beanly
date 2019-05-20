@@ -103,7 +103,7 @@ class TagManager {
 
         // Only let people edit their own tags.
         if (tag.authorId != ctx.event.author.id) {
-            ctx.error("You can only edit your tags!")
+            ctx.error("You can only edit your own tags!")
             return
         }
 
@@ -120,7 +120,7 @@ class TagManager {
 
         // Only let people delete their own tags.
         if (tag.authorId != ctx.event.author.id) {
-            ctx.error("You can only edit your tags!")
+            ctx.error("You can only delete your own tags!")
             return
         }
 
