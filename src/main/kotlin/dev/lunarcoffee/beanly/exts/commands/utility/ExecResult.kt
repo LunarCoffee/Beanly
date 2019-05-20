@@ -107,7 +107,8 @@ suspend fun executeShellScript(ctx: CommandContext, script: String): ExecResult 
         }
     } / 1_000_000
 
-    // Get correct shell environment name based on OS.
+    // Get correct shell environment name based on OS. Not sure why this is even here, since the
+    // actual execution part only supports bash. Maybe I'll do something with that later.
     val osName = System.getProperty("os.name")
     val nameOfExecutor = when {
         "Windows" in osName -> "Windows PowerShell 6.1"
