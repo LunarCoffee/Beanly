@@ -1,22 +1,24 @@
 package dev.lunarcoffee.beanly.exts.commands.utility
 
-import dev.lunarcoffee.framework.core.CommandContext
 import dev.lunarcoffee.framework.api.extensions.await
 import dev.lunarcoffee.framework.api.extensions.error
 import dev.lunarcoffee.framework.api.extensions.send
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withContext
+import dev.lunarcoffee.framework.core.CommandContext
+import kotlinx.coroutines.*
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import java.io.*
+import java.util.concurrent.TimeUnit
 import javax.script.ScriptEngineManager
 import javax.script.ScriptException
 import javax.script.SimpleBindings
+import kotlin.system.measureNanoTime
 
 private val importStatement = """^\s*import\s+([A-z0-9]+\.)*[A-z0-9]+""".toRegex()
 private val scriptEngine = ScriptEngineManager()
     .getEngineByName("kotlin")!!
     .also { setIdeaIoUseFallback() }
+
+private const val shellScriptRoot = "src/main/resources/sh"
 
 class ExecResult(
     val header: String,
@@ -57,9 +59,11 @@ suspend fun executeKotlin(ctx: CommandContext, codeLines: List<String>): ExecRes
     } catch (e: ScriptException) {
         ctx.error("Error during execution! Check your PMs for details.")
         ctx.event.author.openPrivateChannel().await().send(e.toString())
+
         return ExecResult.ERROR
     } catch (e: TimeoutCancellationException) {
         ctx.error("Execution took too long!")
+
         return ExecResult.ERROR
     } finally {
         // Reset stdout and stderr.
@@ -76,5 +80,49 @@ suspend fun executeKotlin(ctx: CommandContext, codeLines: List<String>): ExecRes
         stderr,
         result,
         time as Long
+    )
+}
+
+suspend fun executeShellScript(ctx: CommandContext, script: String): ExecResult {
+    File("$shellScriptRoot/ex.sh").writeText("#!/bin/bash\n$script")
+
+    // Can't leave this uninitialized, maybe contracts will help in the future?
+    var process: Process? = null
+    val fileOut = File("$shellScriptRoot/out.txt")
+    val fileErr = File("$shellScriptRoot/err.txt")
+
+    val time = measureNanoTime {
+        try {
+            process = ProcessBuilder("bash", "$shellScriptRoot/ex.sh")
+                .redirectOutput(ProcessBuilder.Redirect.to(fileOut))
+                .redirectError(ProcessBuilder.Redirect.to(fileErr))
+                .start()
+                .apply { waitFor(30, TimeUnit.SECONDS) }
+        } catch (e: IOException) {
+            GlobalScope.launch {
+                ctx.error("Error starting process! Check your PMs for details.")
+                ctx.event.author.openPrivateChannel().await().send(e.toString())
+            }
+            return ExecResult.ERROR
+        }
+    } / 1_000_000
+
+    // Get correct shell environment name based on OS.
+    val osName = System.getProperty("os.name")
+    val nameOfExecutor = when {
+        "Windows" in osName -> "Windows PowerShell 6.1"
+        "Linux" in osName -> "GNU Bash 4.4.19"
+        else -> "Unknown Shell Environment"
+    }
+
+    val stdout = "\n${fileOut.readText().trim()}".ifBlank { "" }
+    val stderr = "\n${fileErr.readText().trim()}".ifBlank { "" }
+
+    return ExecResult(
+        nameOfExecutor,
+        stdout,
+        stderr,
+        process!!.exitValue(),
+        time
     )
 }

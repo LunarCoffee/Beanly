@@ -6,11 +6,11 @@ import dev.lunarcoffee.beanly.consts.EMBED_COLOR
 import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.exts.commands.utility.ExecResult
 import dev.lunarcoffee.beanly.exts.commands.utility.executeKotlin
+import dev.lunarcoffee.beanly.exts.commands.utility.executeShellScript
 import dev.lunarcoffee.beanly.trimToDescription
 import dev.lunarcoffee.framework.api.dsl.command
 import dev.lunarcoffee.framework.api.dsl.embed
 import dev.lunarcoffee.framework.api.dsl.messagePaginator
-import dev.lunarcoffee.framework.api.extensions.await
 import dev.lunarcoffee.framework.api.extensions.error
 import dev.lunarcoffee.framework.api.extensions.send
 import dev.lunarcoffee.framework.api.extensions.success
@@ -19,15 +19,9 @@ import dev.lunarcoffee.framework.core.transformers.TrInt
 import dev.lunarcoffee.framework.core.transformers.TrRest
 import dev.lunarcoffee.framework.core.transformers.TrSplit
 import dev.lunarcoffee.framework.core.transformers.TrWord
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.io.File
-import java.io.IOException
-import java.util.concurrent.TimeUnit
 import java.util.regex.PatternSyntaxException
 import kotlin.system.exitProcess
-import kotlin.system.measureNanoTime
 
 @CommandGroup("Owner")
 class OwnerCommands {
@@ -60,6 +54,7 @@ class OwnerCommands {
 
             val result = when (language) {
                 "kotlin" -> executeKotlin(ctx, codeLines)
+                "sh" -> executeShellScript(ctx, codeLines.joinToString("\n"))
                 else -> {
                     ctx.error("You must specify a valid language in a code block!")
                     return@execute
@@ -86,78 +81,6 @@ class OwnerCommands {
                             .chunked(16)
                             .forEach { page("```diff\n${it.joinToString("\n")}```") }
                     }
-                }
-            )
-        }
-    }
-
-    fun sh() = command("sh") {
-        val exPath = "src/main/resources/sh/ex.sh"
-
-        description = "Executes a command in a shell."
-        aliases = listOf("shell")
-
-        ownerOnly = true
-        noArgParsing = true
-
-        extDescription = """
-            |`$name command`\n
-            |Executes a command in an unconstrained bash environment. This command can only be used
-            |by my owner, for obvious security reasons. There is a 30 second timeout before the
-            |process is automatically killed.
-        """.trimToDescription()
-
-        expectedArgs = listOf(TrRest())
-        execute { ctx, args ->
-            val command = args.get<String>(0)
-            File(exPath).writeText("#!/bin/bash\n$command")
-
-            // Can't leave this uninitialized, maybe contracts will help in the future?
-            var process: Process? = null
-
-            val time = measureNanoTime {
-                try {
-                    process = ProcessBuilder("bash", exPath)
-                        .redirectOutput(ProcessBuilder.Redirect.PIPE)
-                        .redirectError(ProcessBuilder.Redirect.PIPE)
-                        .start()
-                        .apply { waitFor(30, TimeUnit.SECONDS) }
-                } catch (e: IOException) {
-                    GlobalScope.launch {
-                        ctx.error("Error starting process! Check your PMs for details.")
-                        ctx.event.author.openPrivateChannel().await().send(e.toString())
-                    }
-                    return@execute
-                }
-            } / 1_000_000
-
-            // Get correct shell environment name based on OS.
-            val osName = System.getProperty("os.name")
-            val nameOfExecutor = when {
-                "Windows" in osName -> "Windows PowerShell 6.1"
-                "Linux" in osName -> "GNU Bash 4.4.19"
-                else -> "Unknown Shell Environment"
-            }
-
-            // [process] will always be initialized in real use.
-            val stdoutStderrText = process!!.inputStream.bufferedReader().readText().trim()
-            val stdoutStderr = if (stdoutStderrText.isNotEmpty()) {
-                "\n$stdoutStderrText"
-            } else {
-                ""
-            }
-
-            ctx.send(
-                messagePaginator(ctx.event.author) {
-                    """
-                    |--- $nameOfExecutor ---
-                    |- stdout/stderr:$stdoutStderr
-                    |+ Returned `${process!!.exitValue()}` in ~${time}ms."""
-                        .trimMargin()
-                        .replace(ctx.bot.config.token, "[REDACTED]")
-                        .lines()
-                        .chunked(20)
-                        .forEach { page("```diff\n${it.joinToString("\n")}```") }
                 }
             )
         }
