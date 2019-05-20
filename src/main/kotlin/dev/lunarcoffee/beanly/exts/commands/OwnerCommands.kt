@@ -2,6 +2,7 @@
 
 package dev.lunarcoffee.beanly.exts.commands
 
+import dev.lunarcoffee.beanly.consts.BEANLY_CONFIG
 import dev.lunarcoffee.beanly.consts.EMBED_COLOR
 import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.exts.commands.utility.ExecResult
@@ -15,11 +16,13 @@ import dev.lunarcoffee.framework.api.extensions.error
 import dev.lunarcoffee.framework.api.extensions.send
 import dev.lunarcoffee.framework.api.extensions.success
 import dev.lunarcoffee.framework.core.annotations.CommandGroup
+import dev.lunarcoffee.framework.core.silence
 import dev.lunarcoffee.framework.core.transformers.TrInt
 import dev.lunarcoffee.framework.core.transformers.TrRest
 import dev.lunarcoffee.framework.core.transformers.TrSplit
 import dev.lunarcoffee.framework.core.transformers.TrWord
 import kotlinx.coroutines.delay
+import java.io.File
 import java.util.regex.PatternSyntaxException
 import kotlin.system.exitProcess
 
@@ -83,6 +86,86 @@ class OwnerCommands {
                     }
                 }
             )
+        }
+    }
+
+    fun file() = command("file") {
+        description = "Sends the contents of a file. Only my owner can use this."
+        aliases = listOf("showfile")
+        ownerOnly = true
+
+        extDescription = """
+            |`$name filename [-ru]`\n
+            |This command sends the contents of or uploads a file. If the `-r` flag is provided, I
+            |will treat `filename` as a relative path. If the `-u` flag is provided, I will upload
+            |the file instead of sending its contents to the channel. This command can only be used
+            |by my owner for obvious security reasons.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(), TrWord(true))
+        execute { ctx, args ->
+            val filename = args.get<String>(0)
+            val flags = args.get<String>(1)
+
+            var upload = false
+            var rawPath = false
+            when (flags) {
+                "-r" -> rawPath = true
+                "-u" -> upload = true
+                "-ru", "-ur" -> {
+                    upload = true
+                    rawPath = true
+                }
+            }
+
+            // Having a raw path allows for getting non-bot files.
+            val file = if (rawPath) {
+                silence { File(filename) }
+            } else {
+                File(".").walk().find { it.name.equals(filename, true) }
+            }
+
+            if (file == null) {
+                ctx.error("I can't find a file with that name!")
+                return@execute
+            }
+
+            val rawFileText = file.readText()
+            val apiTokens = arrayOf(
+                ctx.bot.config.token,
+                BEANLY_CONFIG.mapboxToken,
+                BEANLY_CONFIG.osuToken
+            )
+
+            // Don't leak an API token by uploading a file with it.
+            if ((apiTokens.any { it in rawFileText }) && upload) {
+                ctx.error("I can't upload that file! Try again without the `-u` flag.")
+                return@execute
+            }
+
+            if (upload) {
+                ctx.sendMessage(":white_check_mark:  Your file is here!  **\\o/**")
+                    .addFile(file)
+                    .queue()
+            } else {
+                ctx.send(
+                    messagePaginator(ctx.event.author) {
+                        // We use this to replace occurrences of API tokens in each page.
+                        val tokenRegex = "(${apiTokens.joinToString("|")})".toRegex()
+
+                        file.readLines().chunked(16).map { it.joinToString("\n") }.forEach {
+                            val language = when (file.extension) {
+                                "kt" -> "kotlin"
+                                "yaml", "py" -> file.extension
+                                else -> ""
+                            }
+                            val cleaned = it.replace(tokenRegex, "[REDACTED]")
+
+                            page("```$language\n$cleaned```")
+                        }
+                    }
+                )
+            }
         }
     }
 

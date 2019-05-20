@@ -26,7 +26,8 @@ enum class Emoji(private val cp: String) {
     WHITE_SQUARE_BUTTON("\uD83D\uDD33"),
     SNOW_CAPPED_MOUNTAIN("\uD83C\uDFD4"),
     OPEN_BOOK("\uD83D\uDCD6"),
-    BOOKMARK("\uD83D\uDD16");
+    BOOKMARK("\uD83D\uDD16"),
+    CARD_BOX("\uD83D\uDDC3️");
 
     override fun toString() = cp
 }
