@@ -22,6 +22,7 @@ import dev.lunarcoffee.framework.core.transformers.TrWord
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import java.util.regex.PatternSyntaxException
@@ -42,7 +43,8 @@ class OwnerCommands {
             |Executes Kotlin code in an unconstrained environment. This command can only be used by
             |my owner, for obvious security reasons. The only available global is `ctx`, the
             |`CommandContext` object associated with the current command execution. The event and
-            |bot objects can be accessed from the command context.
+            |bot objects can be accessed from the command context. Note that star/wildcard imports
+            |are not supported because I am lazy.
         """.trimToDescription()
 
         expectedArgs = listOf(TrRest())
@@ -90,6 +92,8 @@ class OwnerCommands {
     }
 
     fun sh() = command("sh") {
+        val exPath = "src/main/resources/sh/ex.sh"
+
         description = "Executes a command in a shell."
         aliases = listOf("shell")
         ownerOnly = true
@@ -100,18 +104,21 @@ class OwnerCommands {
             |by my owner, for obvious security reasons.
         """.trimToDescription()
 
-        expectedArgs = listOf(TrSplit())
+        expectedArgs = listOf(TrRest())
         execute { ctx, args ->
-            val command = args.get<List<String>>(0).toTypedArray()
+            val command = args.get<String>(0)
+            File(exPath).writeText("#!/bin/bash\n$command")
+
+            // Can't leave this uninitialized, maybe contracts will help in the future?
             var process: Process? = null
 
             val time = measureNanoTime {
                 try {
-                    process = ProcessBuilder(*command)
+                    process = ProcessBuilder("bash", exPath)
                         .redirectOutput(ProcessBuilder.Redirect.PIPE)
                         .redirectError(ProcessBuilder.Redirect.PIPE)
                         .start()
-                        .apply { waitFor(60, TimeUnit.SECONDS) }
+                        .apply { waitFor(30, TimeUnit.SECONDS) }
                 } catch (e: IOException) {
                     GlobalScope.launch {
                         ctx.error("Error starting process! Check your PMs for details.")
@@ -129,7 +136,7 @@ class OwnerCommands {
                 else -> "Unknown Shell Environment"
             }
 
-            // [process] should always be initialized in real use.
+            // [process] will always be initialized in real use.
             val stdoutStderrText = process!!.inputStream.bufferedReader().readText().trim()
             val stdoutStderr = if (stdoutStderrText.isNotEmpty()) {
                 "\n$stdoutStderrText"
