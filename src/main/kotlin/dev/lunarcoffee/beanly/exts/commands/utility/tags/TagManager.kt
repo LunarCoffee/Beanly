@@ -16,7 +16,13 @@ import java.util.*
 
 class TagManager {
     suspend fun sendTags(ctx: CommandContext) {
-        val tags = tagCol.find(Tag::guildId eq ctx.guild.id).toList().chunked(16)
+        // Sort tag entries by the time they were created at.
+        val tags = tagCol
+            .find(Tag::guildId eq ctx.guild.id)
+            .toList()
+            .sortedByDescending { it.timeCreated }
+            .chunked(16)
+
         if (tags.isEmpty()) {
             ctx.success("There are no tags in this server!")
             return
