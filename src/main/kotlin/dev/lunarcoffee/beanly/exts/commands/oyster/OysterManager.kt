@@ -1,6 +1,7 @@
 package dev.lunarcoffee.beanly.exts.commands.oyster
 
 import dev.lunarcoffee.beanly.consts.DB
+import dev.lunarcoffee.beanly.consts.DEFAULT_TIMER
 import dev.lunarcoffee.framework.api.dsl.embed
 import dev.lunarcoffee.framework.api.dsl.embedPaginator
 import dev.lunarcoffee.framework.api.extensions.error
@@ -8,17 +9,11 @@ import dev.lunarcoffee.framework.api.extensions.send
 import dev.lunarcoffee.framework.api.extensions.success
 import dev.lunarcoffee.framework.core.CommandContext
 import org.litote.kmongo.eq
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.schedule
 import kotlin.random.Random
 
 class OysterManager {
-    // User IDs of users currently on cooldown.
-    private val onCooldown = ConcurrentHashMap<String, Long>()
-    private val cooldownTimer = Timer()
-    private val cooldownMs = 5_000L
-
     suspend fun sendCatches(ctx: CommandContext) {
         val user = userCol.findOne(isSame(ctx.event.author.id))
         if (user == null || user.catches.isEmpty()) {
@@ -78,7 +73,7 @@ class OysterManager {
         // Schedule cooldown. No persistence since the cooldown should be short enough that a bot
         // shutdown or restart would take longer.
         onCooldown[userId] = System.currentTimeMillis() + cooldownMs
-        cooldownTimer.schedule(cooldownMs) { onCooldown.remove(userId) }
+        DEFAULT_TIMER.schedule(cooldownMs) { onCooldown.remove(userId) }
     }
 
     private suspend fun catch(ctx: CommandContext): OysterCatch {
@@ -104,6 +99,11 @@ class OysterManager {
 
     companion object {
         private val userCol = DB.getCollection<OysterUser>("OysterUsers3")
+
+        // User IDs of users currently on cooldown.
+        private val onCooldown = ConcurrentHashMap<String, Long>()
+
+        private const val cooldownMs = 5_000L
         private const val chance = 3
 
         // Weighting of 10; pretty useless, mostly just filler.

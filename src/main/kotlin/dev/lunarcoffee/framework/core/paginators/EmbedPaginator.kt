@@ -5,10 +5,12 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import java.util.*
 
-open class EmbedPaginator(override val creator: User) : Paginator() {
-    override val closeTimer = Timer()
-    override lateinit var closeTask: TimerTask
+open class EmbedPaginator(
+    override val creator: User,
+    override val closeTimer: Timer
+) : Paginator() {
 
+    override lateinit var closeTask: TimerTask
     override lateinit var message: Message
 
     override val pages = mutableListOf<Message>()

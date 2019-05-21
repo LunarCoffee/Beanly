@@ -2,6 +2,7 @@
 
 package dev.lunarcoffee.beanly.exts.commands.utility.timers
 
+import dev.lunarcoffee.beanly.consts.DEFAULT_TIMER
 import dev.lunarcoffee.framework.api.extensions.success
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -22,7 +23,7 @@ class RemindTimer(
 ) : BaseTimer {
 
     override fun <T : Any> schedule(event: Event, col: CoroutineCollection<T>) {
-        Timer().schedule(time) {
+        DEFAULT_TIMER.schedule(time) {
             // Stop if the reminder is no longer in the database (it has been removed manually).
             val reminderStillActive = runBlocking { col.findOne(isSame()) != null }
             if (!reminderStillActive) {

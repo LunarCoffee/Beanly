@@ -2,6 +2,7 @@
 
 package dev.lunarcoffee.beanly.exts.commands.utility.timers
 
+import dev.lunarcoffee.beanly.consts.DEFAULT_TIMER
 import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.framework.api.dsl.embed
 import dev.lunarcoffee.framework.api.extensions.await
@@ -28,7 +29,7 @@ class MuteTimer(
 ) : BaseTimer {
 
     override fun <T : Any> schedule(event: Event, col: CoroutineCollection<T>) {
-        Timer().schedule(time) {
+        DEFAULT_TIMER.schedule(time) {
             // Stop if the mute is no longer in the database (it has been removed manually).
             val muteStillActive = runBlocking { col.findOne(::userId eq userId) != null }
             if (!muteStillActive) {

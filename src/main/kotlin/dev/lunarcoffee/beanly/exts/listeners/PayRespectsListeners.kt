@@ -1,5 +1,6 @@
 package dev.lunarcoffee.beanly.exts.listeners
 
+import dev.lunarcoffee.beanly.consts.DEFAULT_TIMER
 import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.consts.GUILD_OVERRIDES
 import dev.lunarcoffee.beanly.exts.commands.utility.GO
@@ -48,7 +49,7 @@ class PayRespectsListeners(private val bot: Bot) : ListenerAdapter() {
 
             // Register the message and listen for reactions to it for one day.
             active[message.id] = message
-            Timer().schedule(86_400_000L) { active.remove(message.id) }
+            DEFAULT_TIMER.schedule(86_400_000L) { active.remove(message.id) }
         }
     }
 

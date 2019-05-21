@@ -1,5 +1,6 @@
 package dev.lunarcoffee.beanly.exts.commands.utility.timers
 
+import dev.lunarcoffee.beanly.consts.DEFAULT_TIMER
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.events.Event
@@ -10,6 +11,6 @@ import kotlin.concurrent.schedule
 
 class RPlaceTimer(override val time: Date, val userId: String) : BaseTimer {
     override fun <T : Any> schedule(event: Event, col: CoroutineCollection<T>) {
-        Timer().schedule(time) { GlobalScope.launch { col.deleteOne(::userId eq userId) } }
+        DEFAULT_TIMER.schedule(time) { GlobalScope.launch { col.deleteOne(::userId eq userId) } }
     }
 }

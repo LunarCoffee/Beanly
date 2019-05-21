@@ -1,17 +1,18 @@
 package dev.lunarcoffee.framework.api.dsl
 
+import dev.lunarcoffee.beanly.consts.DEFAULT_TIMER
 import dev.lunarcoffee.framework.core.paginators.EmbedPaginator
 import dev.lunarcoffee.framework.core.paginators.MessagePaginator
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.User
 
-class MessagePaginatorDsl(creator: User) : MessagePaginator(creator) {
+class MessagePaginatorDsl(creator: User) : MessagePaginator(creator, DEFAULT_TIMER) {
     fun page(content: String) {
         pages += message { this@message.content = content }
     }
 }
 
-class EmbedPaginatorDsl(creator: User) : EmbedPaginator(creator) {
+class EmbedPaginatorDsl(creator: User) : EmbedPaginator(creator, DEFAULT_TIMER) {
     fun page(embed: MessageEmbed) {
         pages += message { this@message.embed = embed }
     }
