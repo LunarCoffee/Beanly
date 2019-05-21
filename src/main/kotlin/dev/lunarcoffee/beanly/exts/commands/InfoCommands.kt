@@ -3,6 +3,8 @@ package dev.lunarcoffee.beanly.exts.commands
 import dev.lunarcoffee.beanly.constToEng
 import dev.lunarcoffee.beanly.consts.Emoji
 import dev.lunarcoffee.beanly.consts.TIME_FORMATTER
+import dev.lunarcoffee.beanly.exts.commands.oyster.OysterCatch
+import dev.lunarcoffee.beanly.exts.commands.oyster.OysterManager
 import dev.lunarcoffee.beanly.toYesNo
 import dev.lunarcoffee.beanly.trimToDescription
 import dev.lunarcoffee.framework.api.dsl.command

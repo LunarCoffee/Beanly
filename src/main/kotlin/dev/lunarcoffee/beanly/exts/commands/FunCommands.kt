@@ -3,6 +3,7 @@
 package dev.lunarcoffee.beanly.exts.commands
 
 import dev.lunarcoffee.beanly.consts.Emoji
+import dev.lunarcoffee.beanly.exts.commands.oyster.OysterManager
 import dev.lunarcoffee.beanly.exts.commands.utility.DiceRoll
 import dev.lunarcoffee.beanly.exts.commands.utility.rplace.RPlaceCanvas
 import dev.lunarcoffee.beanly.exts.commands.utility.toDiceRoll
@@ -338,6 +339,42 @@ class FunCommands {
                     }
                     "gallery" -> sendGallery(ctx, args)
                     else -> ctx.error("That operation is invalid!")
+                }
+            }
+        }
+    }
+
+    fun oyster() = command("oyster") {
+        val oysterManager = OysterManager()
+
+        description = "What will you discover?"
+        aliases = listOf("luckyoyster")
+
+        extDescription = """
+            |`$name [view]`\n
+            |Find old things and treasures in the ocean. If the `view` argument is provided (and is
+            |`view`), I will show you all the things you have caught in the past. With no
+            |arguments, you can test your luck and fish for something. That's all there is to it...
+            |as far as I know.
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord(true))
+        execute { ctx, args ->
+            val action = args.get<String>(0)
+            val view = when {
+                action.isEmpty() -> false
+                action == "view" -> true
+                else -> {
+                    ctx.error("That isn't a valid operation!")
+                    return@execute
+                }
+            }
+
+            oysterManager.run {
+                when {
+                    view -> sendCatches(ctx)
+                    handleCooldown(ctx) -> Unit
+                    else -> generateCatch(ctx)
                 }
             }
         }
