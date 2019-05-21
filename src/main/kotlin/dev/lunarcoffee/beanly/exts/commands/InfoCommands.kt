@@ -113,7 +113,7 @@ class InfoCommands {
                             |**Join time**: ${timeJoined.format(TIME_FORMATTER)}
                             |**Avatar ID**: ${user.avatarId ?: "(none)"}
                             |**Mention**: $asMention
-                            |**Roles**: $userRoles
+                            |**Roles**: ${userRoles.ifEmpty { "(none)" }}
                         """.trimMargin()
 
                         thumbnail { url = user.avatarUrl ?: user.defaultAvatarUrl }
@@ -282,6 +282,7 @@ class InfoCommands {
                             "role **@$name**"
                         }
                         val mention = if (guild.id == ctx.guild.id) asMention else "(unavailable)"
+                        val permissions = permissions.map { it.constToEng() }.ifEmpty { "(none)" }
 
                         title = "${Emoji.MAG_GLASS}  Info on $roleName:"
                         description = """
@@ -292,7 +293,7 @@ class InfoCommands {
                             |**Mention**: $mention
                             |**Creation time**: ${timeCreated.format(TIME_FORMATTER)}
                             |**Managed**: ${isManaged.toYesNo()}
-                            |**Permissions**: ${permissions.map { it.constToEng() }}
+                            |**Permissions**: $permissions
                         """.trimMargin()
                     }
                 }
