@@ -2,19 +2,18 @@ package dev.lunarcoffee.framework.api.dsl
 
 import dev.lunarcoffee.framework.core.paginators.EmbedPaginator
 import dev.lunarcoffee.framework.core.paginators.MessagePaginator
-import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.User
 
 class MessagePaginatorDsl(creator: User) : MessagePaginator(creator) {
     fun page(content: String) {
-        pages += MessageBuilder().setContent(content).build()
+        pages += message { this@message.content = content }
     }
 }
 
 class EmbedPaginatorDsl(creator: User) : EmbedPaginator(creator) {
     fun page(embed: MessageEmbed) {
-        pages += MessageBuilder().setEmbed(embed).build()
+        pages += message { this@message.embed = embed }
     }
 }
 

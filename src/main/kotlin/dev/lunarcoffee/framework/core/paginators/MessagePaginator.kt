@@ -1,6 +1,6 @@
 package dev.lunarcoffee.framework.core.paginators
 
-import net.dv8tion.jda.api.MessageBuilder
+import dev.lunarcoffee.framework.api.dsl.message
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import java.util.*
@@ -15,14 +15,12 @@ open class MessagePaginator(override val creator: User) : Paginator() {
     override var currentPage = 0
 
     override fun formatMessage(): Message {
-        return MessageBuilder()
-            .setContent(
-                if (totalPages == 1) {
-                    pages[currentPage].contentRaw
-                } else {
-                    "[${currentPage + 1}/$totalPages]\n${pages[currentPage].contentRaw}"
-                }
-            )
-            .build()
+        return message {
+            content = if (totalPages == 1) {
+                pages[currentPage].contentRaw
+            } else {
+                "[${currentPage + 1}/$totalPages]\n${pages[currentPage].contentRaw}"
+            }
+        }
     }
 }

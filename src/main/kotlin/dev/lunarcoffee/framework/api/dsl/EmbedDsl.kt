@@ -7,10 +7,10 @@ import net.dv8tion.jda.api.entities.EmbedType
 import net.dv8tion.jda.api.entities.MessageEmbed
 
 class EmbedDsl {
-    var url: String = ""
-    var title: String = ""
-    var description: String = ""
-    var color: Int = EMBED_COLOR
+    var url = ""
+    var title = ""
+    var description = ""
+    var color = EMBED_COLOR
 
     private var author: MessageEmbed.AuthorInfo? = null
     private var footer: MessageEmbed.Footer? = null

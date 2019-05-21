@@ -55,6 +55,12 @@ class TagManager {
             return
         }
 
+        val attachments = tag
+            .content
+            .split("\n")
+            .takeLastWhile { it.startsWith("https://cdn.discordapp.com/attachments/") }
+            .joinToString("\n")
+
         ctx.send(
             embed {
                 tag.run {
@@ -71,7 +77,14 @@ class TagManager {
 
                     field {
                         this@field.name = "Content:"
-                        content = this@run.content
+                        content = this@run.content.removeSuffix(attachments)
+                    }
+
+                    if (attachments.isNotEmpty()) {
+                        field {
+                            this@field.name = "Attachments:"
+                            content = attachments
+                        }
                     }
                 }
             }
@@ -90,7 +103,11 @@ class TagManager {
             return
         }
 
-        tagCol.insertOne(Tag(ctx.guild.id, ctx.event.author.id, name, content, Date()))
+        // Add attachments to the tag as well.
+        val attachments = ctx.event.message.attachments.joinToString("\n") { it.url }
+        val fullContent = "$content\n$attachments"
+
+        tagCol.insertOne(Tag(ctx.guild.id, ctx.event.author.id, name, fullContent, Date()))
         ctx.success("Your tag has been created!")
     }
 

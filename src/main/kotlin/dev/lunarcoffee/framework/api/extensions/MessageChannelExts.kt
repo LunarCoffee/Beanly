@@ -26,6 +26,18 @@ suspend fun MessageChannel.send(
     }
 }
 
+suspend fun MessageChannel.send(
+    message: Message,
+    after: suspend (Message) -> Unit = {}
+): Message {
+
+    return try {
+        sendMessage(message).await().apply { after(this) }
+    } catch (e: ErrorResponseException) {
+        error("The message that was supposed to be sent can't fit in a message or embed!")
+    }
+}
+
 suspend fun MessageChannel.send(paginator: Paginator, after: suspend (Paginator) -> Unit = {}) {
     try {
         after(paginator.apply { send(this@send) })
