@@ -3,6 +3,7 @@
 package dev.lunarcoffee.beanly.exts.commands
 
 import dev.lunarcoffee.beanly.consts.Emoji
+import dev.lunarcoffee.beanly.exts.commands.oyster.OysterCatchRarity
 import dev.lunarcoffee.beanly.exts.commands.oyster.OysterManager
 import dev.lunarcoffee.beanly.exts.commands.utility.DiceRoll
 import dev.lunarcoffee.beanly.exts.commands.utility.rplace.RPlaceCanvas
@@ -356,6 +357,13 @@ class FunCommands {
             |`view`), I will show you all the things you have caught in the past. With no
             |arguments, you can test your luck and fish for something. That's all there is to it...
             |as far as I know.
+            |&{Item rarity:}
+            |Different items can have different rarity prefixes:\n
+            | - `${OysterCatchRarity.COMMON.prefix}`: common\n
+            | - `${OysterCatchRarity.UNCOMMON.prefix}`: uncommon\n
+            | - `${OysterCatchRarity.RARE.prefix}`: rare\n
+            | - `${OysterCatchRarity.MYTHICAL.prefix}`: mythical\n
+            |I'm not too sure why they're there or what they mean, though.
         """.trimToDescription()
 
         expectedArgs = listOf(TrWord(true))

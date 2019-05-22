@@ -1,9 +1,13 @@
 package dev.lunarcoffee.beanly.exts.commands.oyster
 
-import java.io.Serializable
+class OysterCatch(
+    val name: String,
+    val description: String,
+    val rarity: OysterCatchRarity
+) {
+    val nameWithPrefix get() = rarity.prefix + name
 
-class OysterCatch(val name: String, val description: String) : Serializable {
     companion object {
-        val EMPTY = OysterCatch("", "")
+        val EMPTY = OysterCatch("", "", OysterCatchRarity.COMMON)
     }
 }
