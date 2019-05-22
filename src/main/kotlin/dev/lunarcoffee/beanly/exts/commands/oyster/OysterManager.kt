@@ -118,7 +118,6 @@ class OysterManager {
         private const val t = 4
         private const val chance = 7
 
-
         // Weighting of 24; pretty useless, mostly just filler.
         private val commonCatches = List(24) {
             listOf(

@@ -56,7 +56,6 @@ abstract class Paginator {
         message.clearReactions().queue()
         Paginator.active.remove(message.id)
         closeTask.cancel()
-        closeTimer.cancel()
     }
 
     private fun wrapPageNumber(page: Int): Int {
