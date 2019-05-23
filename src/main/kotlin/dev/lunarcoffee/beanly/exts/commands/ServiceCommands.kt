@@ -5,6 +5,8 @@ import dev.lunarcoffee.beanly.exts.commands.utility.getXkcd
 import dev.lunarcoffee.beanly.exts.commands.utility.iss.IssLocation
 import dev.lunarcoffee.beanly.exts.commands.utility.osu.beatmap.OsuBeatmap
 import dev.lunarcoffee.beanly.exts.commands.utility.osu.user.OsuUser
+import dev.lunarcoffee.beanly.exts.commands.utility.uno.UnoGame
+import dev.lunarcoffee.beanly.exts.commands.utility.uno.cards.UnoCard
 import dev.lunarcoffee.beanly.trimToDescription
 import dev.lunarcoffee.framework.api.dsl.command
 import dev.lunarcoffee.framework.api.dsl.embed
@@ -14,6 +16,7 @@ import dev.lunarcoffee.framework.api.extensions.send
 import dev.lunarcoffee.framework.core.annotations.CommandGroup
 import dev.lunarcoffee.framework.core.transformers.TrWord
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 @CommandGroup("Service")
@@ -140,6 +143,25 @@ class ServiceCommands {
                     ctx.error("That operation is invalid!")
                 }
             }
+        }
+    }
+
+    fun uno() = command("uno") {
+        // Map of the channel ID to game.
+        val instances = ConcurrentHashMap<String, UnoGame>()
+
+        description = "Play a game of UNO with your friends!"
+        aliases = listOf("unogame")
+
+        extDescription = """
+            |`$name [join|leave|kick|start|callout]`\n
+            |Have some time and friends? Want to play UNO? This is the command for you!
+        """.trimToDescription()
+
+        expectedArgs = listOf(TrWord())
+        execute { ctx, args ->
+            val action = args.get<String>(0)
+            val channelId = ctx.id
         }
     }
 }

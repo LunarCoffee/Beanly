@@ -366,9 +366,16 @@ class UtilityCommands {
             |With a command name, this command gets its aliases, expected usage, expected
             |arguments, and optionally (if the `-v` flag is set) an extended description (which
             |you're reading right now). Otherwise, this command simply lists available commands.
+            |&{Examples:}
+            |Here are some examples of using this command:\n
+            | - `..help`: lists all commands\n
+            | - `..help osu`: shows general information about the `osu` command\n
+            | - `..help rplace -v`: shows very detailed information about the `rplace` command\n
+            |Basically, add `-v` (things prefixed with a `-` are called flags) to the end for more
+            |detailed help text.
             |&{Reading command usages:}
             |The syntax of the expected command usage is as follows:\n
-            | - `name`: denotes that `name` is required\n
+            | - `name`: denotes that `name` is required, which may be literal or variable\n
             | - `name1|name2`: denotes that either `name1` or `name2` is valid\n
             | - `name...`: denotes that many of `name` can be specified\n
             |If an argument is wrapped with square brackets, it is optional. You may wrap an
