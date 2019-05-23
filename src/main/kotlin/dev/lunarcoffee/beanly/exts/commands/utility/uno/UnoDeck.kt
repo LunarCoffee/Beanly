@@ -40,6 +40,8 @@ class UnoDeck {
         return false
     }
 
+    fun insertBottom(cards: List<UnoCard>) = active.addAll(0, cards)
+
     // If all the deck is used in play, restart the deck.
     private fun restartDeck() {
         // Top of the discard pile becomes the new discard pile.

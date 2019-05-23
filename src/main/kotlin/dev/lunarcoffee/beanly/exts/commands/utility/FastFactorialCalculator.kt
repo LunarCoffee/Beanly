@@ -3,7 +3,7 @@ package dev.lunarcoffee.beanly.exts.commands.utility
 import java.math.BigInteger
 import java.util.*
 
-class FastFactorialCalculator {
+object FastFactorialCalculator {
     private val cache = WeakHashMap<Long, BigInteger>()
 
     fun factorial(n: Long): BigInteger {

@@ -54,7 +54,7 @@ abstract class Paginator {
 
     fun close() {
         message.clearReactions().queue()
-        Paginator.active.remove(message.id)
+        active -= message.id
         closeTask.cancel()
     }
 

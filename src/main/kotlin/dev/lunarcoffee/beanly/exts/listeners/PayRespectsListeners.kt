@@ -49,7 +49,7 @@ class PayRespectsListeners(private val bot: Bot) : ListenerAdapter() {
 
             // Register the message and listen for reactions to it for one day.
             active[message.id] = message
-            DEFAULT_TIMER.schedule(86_400_000L) { active.remove(message.id) }
+            DEFAULT_TIMER.schedule(86_400_000L) { active -= message.id }
         }
     }
 

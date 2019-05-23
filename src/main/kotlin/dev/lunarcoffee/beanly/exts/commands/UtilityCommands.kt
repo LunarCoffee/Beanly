@@ -273,8 +273,6 @@ class UtilityCommands {
     }
 
     fun fact() = command("fact") {
-        val factorialCalculator = FastFactorialCalculator()
-
         description = "Calculates the factorial of a given number."
         aliases = listOf("factorial")
 
@@ -282,17 +280,17 @@ class UtilityCommands {
             |`$name number`\n
             |A lot of online calculators stop giving you factorials in whole numbers after quite an
             |early point, usually around `15!` or so. Unlike them, I'll calculate factorials up to
-            |100000 and happily provide them in all their glory.
+            |50000 and happily provide them in all their glory.
         """.trimToDescription()
 
         expectedArgs = listOf(TrInt())
         execute { ctx, args ->
             val number = args.get<Int>(0).toLong()
-            if (number !in 0..100_000) {
+            if (number !in 0..50_000) {
                 ctx.error("I can't calculate the factorial of that number!")
                 return@execute
             }
-            val result = factorialCalculator.factorial(number).toString().chunked(1_827)
+            val result = FastFactorialCalculator.factorial(number).toString().chunked(1_827)
 
             ctx.send(
                 messagePaginator(ctx.event.author) {
@@ -305,8 +303,6 @@ class UtilityCommands {
     }
 
     fun tags() = command("tags") {
-        val tagManager = TagManager()
-
         description = "Create textual tags to save!"
         aliases = listOf("notes")
 
@@ -336,14 +332,14 @@ class UtilityCommands {
         execute { ctx, args ->
             val action = args.get<String>(0)
             if (action.isEmpty()) {
-                tagManager.sendTags(ctx)
+                TagManager.sendTags(ctx)
                 return@execute
             }
 
             val tagName = args.get<String>(1)
             val tagContent = args.get<String>(2)
 
-            tagManager.run {
+            TagManager.run {
                 when (action) {
                     "view" -> sendOneTag(ctx, tagName)
                     "add" -> addTag(ctx, tagName, tagContent)

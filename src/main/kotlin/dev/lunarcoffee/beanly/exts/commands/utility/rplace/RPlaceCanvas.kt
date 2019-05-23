@@ -27,9 +27,23 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
 import java.awt.RenderingHints as RH
 
-class RPlaceCanvas {
+object RPlaceCanvas {
+    const val IMAGE_PATH = "src/main/resources/rplace/rplace_canvas.png"
+
+    private const val CANVAS_SIZE = 40
+    private const val IMAGE_SIZE = 30 * CANVAS_SIZE + 90
+
+    // In-memory representation of the canvas.
     private val canvas = Array(CANVAS_SIZE) { Array(CANVAS_SIZE) { Color.WHITE } }
-    private val gallery = RPlaceGallery(this)
+
+    // Collections that store canvas info (i.e. contributors, total pixels put) and the colors of
+    // the canvas itself.
+    private val canvasInfoCol = DB.getCollection<RPlaceCanvasInfo>("RPlaceCanvasInfo0")
+    private val canvasCol = DB.getCollection<Color>("RPlaceCanvas0")
+
+    private val cooldownCol = DB.getCollection<RPlaceTimer>(
+        COL_NAMES[RPlaceTimer::class.simpleName]!!
+    )
 
     private val canvasInfo = runBlocking {
         canvasInfoCol.run {
@@ -43,20 +57,22 @@ class RPlaceCanvas {
     private var totalPixelsPut = AtomicLong(canvasInfo.totalPixelsPut)
     private var totalContributors = AtomicInteger(canvasInfo.contributors.size)
 
-    suspend fun load() {
-        // Fill with white if the canvas in the DB is empty.
-        if (canvasCol.find().toList().isEmpty()) {
-            canvasCol.insertMany(List(CANVAS_SIZE * CANVAS_SIZE) { Color.WHITE })
-        }
+    init {
+        runBlocking {
+            // Fill with white if the canvas in the DB is empty.
+            if (canvasCol.find().toList().isEmpty()) {
+                canvasCol.insertMany(List(CANVAS_SIZE * CANVAS_SIZE) { Color.WHITE })
+            }
 
-        // Load the canvas into the array in memory.
-        val dbCanvas = canvasCol
-            .find()
-            .toList()
-            .chunked(CANVAS_SIZE)
-            .map { it.toTypedArray() }
-            .toTypedArray()
-        dbCanvas.copyInto(canvas)
+            // Load the canvas into the array in memory.
+            val dbCanvas = canvasCol
+                .find()
+                .toList()
+                .chunked(CANVAS_SIZE)
+                .map { it.toTypedArray() }
+                .toTypedArray()
+            dbCanvas.copyInto(canvas)
+        }
     }
 
     suspend fun sendCanvas(ctx: CommandContext, grid: Boolean? = true) {
@@ -127,18 +143,6 @@ class RPlaceCanvas {
                 sendCanvas(ctx)
             }
         }
-    }
-
-    suspend fun takeSnapshot(ctx: CommandContext, args: CommandArguments) {
-        gallery.takeSnapshot(ctx, args)
-    }
-
-    suspend fun deleteSnapshot(ctx: CommandContext, args: CommandArguments) {
-        gallery.deleteSnapshot(ctx, args)
-    }
-
-    suspend fun sendGallery(ctx: CommandContext, args: CommandArguments) {
-        gallery.sendGallery(ctx, args)
     }
 
     fun createAndSaveImage(grid: Boolean = false) {
@@ -257,20 +261,6 @@ class RPlaceCanvas {
 
         canvasInfoCol.updateOne(
             RPlaceCanvasInfo::totalPixelsPut eq totalPixelsPut.get() - 1, canvasInfo
-        )
-    }
-
-    companion object {
-        const val IMAGE_PATH = "src/main/resources/rplace/rplace_canvas.png"
-
-        private const val CANVAS_SIZE = 40
-        private const val IMAGE_SIZE = 30 * CANVAS_SIZE + 90
-
-        private val canvasInfoCol = DB.getCollection<RPlaceCanvasInfo>("RPlaceCanvasInfo0")
-        private val canvasCol = DB.getCollection<Color>("RPlaceCanvas0")
-
-        private val cooldownCol = DB.getCollection<RPlaceTimer>(
-            COL_NAMES[RPlaceTimer::class.simpleName]!!
         )
     }
 }

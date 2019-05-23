@@ -14,7 +14,9 @@ import org.litote.kmongo.and
 import org.litote.kmongo.eq
 import java.util.*
 
-class TagManager {
+object TagManager {
+    private val tagCol = DB.getCollection<Tag>("Tags1")
+
     suspend fun sendTags(ctx: CommandContext) {
         // Sort tag entries by the time they were created at.
         val tags = tagCol
@@ -148,9 +150,5 @@ class TagManager {
     // Matches tags by guild ID and name.
     private fun sameTag(ctx: CommandContext, name: String): Bson {
         return and(Tag::guildId eq ctx.guild.id, Tag::name eq name)
-    }
-
-    companion object {
-        val tagCol = DB.getCollection<Tag>("Tags1")
     }
 }

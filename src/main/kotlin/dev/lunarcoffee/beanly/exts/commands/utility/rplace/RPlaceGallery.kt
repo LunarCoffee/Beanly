@@ -1,7 +1,6 @@
 package dev.lunarcoffee.beanly.exts.commands.utility.rplace
 
 import dev.lunarcoffee.beanly.consts.Emoji
-import dev.lunarcoffee.beanly.consts.TIME_FORMATTER
 import dev.lunarcoffee.framework.api.dsl.embed
 import dev.lunarcoffee.framework.api.dsl.embedPaginator
 import dev.lunarcoffee.framework.api.extensions.error
@@ -21,7 +20,9 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import javax.imageio.ImageIO
 
-class RPlaceGallery(private val canvas: RPlaceCanvas) {
+object RPlaceGallery {
+    private const val SNAPSHOT_PATH = "src/main/resources/rplace/snapshots"
+
     suspend fun takeSnapshot(ctx: CommandContext, args: CommandArguments) {
         val cleanName = args.get<String>(3).replace("=", "_")
         if (cleanName.length !in 1..20) {
@@ -46,7 +47,7 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
         }
 
         // First save the image without a grid.
-        canvas.createAndSaveImage()
+        RPlaceCanvas.createAndSaveImage()
 
         // Scale the image down to save memory.
         val scaledImage = toBufferedImage(
@@ -166,9 +167,5 @@ class RPlaceGallery(private val canvas: RPlaceCanvas) {
             .substringBefore(".")
             .toLong() - System.currentTimeMillis()
         return SplitTime(timeMs).localWithoutWeekday()
-    }
-
-    companion object {
-        private const val SNAPSHOT_PATH = "src/main/resources/rplace/snapshots"
     }
 }

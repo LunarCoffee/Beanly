@@ -7,6 +7,7 @@ import dev.lunarcoffee.beanly.exts.commands.oyster.OysterCatchRarity
 import dev.lunarcoffee.beanly.exts.commands.oyster.OysterManager
 import dev.lunarcoffee.beanly.exts.commands.utility.DiceRoll
 import dev.lunarcoffee.beanly.exts.commands.utility.rplace.RPlaceCanvas
+import dev.lunarcoffee.beanly.exts.commands.utility.rplace.RPlaceGallery
 import dev.lunarcoffee.beanly.exts.commands.utility.toDiceRoll
 import dev.lunarcoffee.beanly.trimToDescription
 import dev.lunarcoffee.framework.api.dsl.command
@@ -19,8 +20,6 @@ import dev.lunarcoffee.framework.api.extensions.success
 import dev.lunarcoffee.framework.core.annotations.CommandGroup
 import dev.lunarcoffee.framework.core.silence
 import dev.lunarcoffee.framework.core.transformers.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 @CommandGroup("Fun")
@@ -173,7 +172,7 @@ class FunCommands {
     }
 
     fun eightBall() = command("8ball") {
-        val responses = listOf(
+        val responses = arrayOf(
             "It is certain.",
             "It is decidedly so.",
             "Without a doubt.",
@@ -289,8 +288,6 @@ class FunCommands {
     }
 
     fun rplace() = command("rplace") {
-        val canvas = RPlaceCanvas().apply { GlobalScope.launch { load() } }
-
         description = "An open canvas similar to r/place."
         aliases = listOf("redditplace")
 
@@ -325,20 +322,20 @@ class FunCommands {
             // Send this when someone not the owner tries to use <snap> or <dsnap>.
             val ownerTag = ctx.jda.getUserById(ctx.bot.config.ownerId)!!.asTag
 
-            canvas.apply {
+            RPlaceCanvas.apply {
                 when (args.get<String>(0)) {
                     "" -> sendCanvas(ctx)
                     "nogrid" -> sendCanvas(ctx, false)
                     "raw" -> sendCanvas(ctx, null)
                     "colors" -> sendColors(ctx)
                     "put" -> putPixelContext(ctx, args)
-                    "snap" -> takeSnapshot(ctx, args)
+                    "snap" -> RPlaceGallery.takeSnapshot(ctx, args)
                     "dsnap" -> if (ctx.isOwner()) {
-                        deleteSnapshot(ctx, args)
+                        RPlaceGallery.deleteSnapshot(ctx, args)
                     } else {
                         ctx.error("Contact `$ownerTag` to request a snapshot deletion.")
                     }
-                    "gallery" -> sendGallery(ctx, args)
+                    "gallery" -> RPlaceGallery.sendGallery(ctx, args)
                     else -> ctx.error("That operation is invalid!")
                 }
             }
@@ -346,8 +343,6 @@ class FunCommands {
     }
 
     fun oyster() = command("oyster") {
-        val oysterManager = OysterManager()
-
         description = "What will you discover?"
         aliases = listOf("luckyoyster")
 
@@ -378,7 +373,7 @@ class FunCommands {
                 }
             }
 
-            oysterManager.run {
+            OysterManager.run {
                 when {
                     view -> sendCatches(ctx)
                     handleCooldown(ctx) -> Unit
